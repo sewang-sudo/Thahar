@@ -3,13 +3,13 @@ use crate::state::OracleData;
 use crate::error::ThaharError;
 
 #[derive(Accounts)]
-#[instruction(rainfall_mm: i64, flood_level_cm: i64)]
+#[instruction(region_id: String, rainfall_mm: i64, flood_level_cm: i64)]
 pub struct UpdateOracle<'info> {
     #[account(
         init_if_needed,
         payer = authority,
         space = OracleData::LEN,
-        seeds = [b"oracle", oracle.region_id.as_bytes()],
+        seeds = [b"oracle", region_id.as_bytes()],
         bump
     )]
     pub oracle: Account<'info, OracleData>,
@@ -22,15 +22,16 @@ pub struct UpdateOracle<'info> {
 
 pub fn handler(
     ctx: Context<UpdateOracle>,
+    region_id: String,
     rainfall_mm: i64,
     flood_level_cm: i64,
 ) -> Result<()> {
     let oracle = &mut ctx.accounts.oracle;
 
-    // First time init: set authority and bump
     if oracle.authority == Pubkey::default() {
-        oracle.authority = ctx.accounts.authority.key();
-        oracle.bump = ctx.bumps.oracle;
+        oracle.authority  = ctx.accounts.authority.key();
+        oracle.region_id  = region_id;
+        oracle.bump       = ctx.bumps.oracle;
     } else {
         require!(
             oracle.authority == ctx.accounts.authority.key(),

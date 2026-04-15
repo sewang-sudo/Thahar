@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program;
 use crate::state::{InsurancePolicy, PolicyStatus, ProgramTreasury};
 use crate::error::ThaharError;
 
@@ -33,16 +32,19 @@ pub fn handler(ctx: Context<PayPremium>, amount: u64) -> Result<()> {
         ThaharError::PolicyNotActive
     );
 
-    system_program::transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            system_program::Transfer {
-                from: ctx.accounts.farmer.to_account_info(),
-                to:   ctx.accounts.treasury.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
+    // Anchor v1: manual lamport transfer instead of CPI
+    let farmer_info   = ctx.accounts.farmer.to_account_info();
+    let treasury_info = ctx.accounts.treasury.to_account_info();
+
+    **farmer_info.try_borrow_mut_lamports()? = farmer_info
+        .lamports()
+        .checked_sub(amount)
+        .ok_or(ThaharError::ArithmeticOverflow)?;
+
+    **treasury_info.try_borrow_mut_lamports()? = treasury_info
+        .lamports()
+        .checked_add(amount)
+        .ok_or(ThaharError::ArithmeticOverflow)?;
 
     let policy = &mut ctx.accounts.policy;
     policy.premium_paid = policy.premium_paid
