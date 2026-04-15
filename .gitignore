@@ -13,3 +13,4 @@ anchor-program/target/
 frontend/build/
 backend/__pycache__/
 *.env
+anchor-program/target/
