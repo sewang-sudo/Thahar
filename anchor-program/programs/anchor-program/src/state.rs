@@ -1,25 +1,70 @@
 use anchor_lang::prelude::*;
 
-#[account]
-pub struct TicketAccount {
-    pub owner: Pubkey,
-    pub activity_id: String,
-    pub activity_name: String,
-    pub event_date: i64,
-    pub price_sol: u64,
-    pub is_for_sale: bool,
-    pub resale_price: u64,
-    pub bump: u8,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+pub enum PolicyType {
+    Crop,
+    Disaster,
 }
 
-impl TicketAccount {
-    pub const LEN: usize = 8  // discriminator
-        + 32                   // owner pubkey
-        + 4 + 36               // activity_id (UUID string)
-        + 4 + 100              // activity_name
-        + 8                    // event_date
-        + 8                    // price_sol
-        + 1                    // is_for_sale
-        + 8                    // resale_price
-        + 1;                   // bump
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+pub enum PolicyStatus {
+    Active,
+    PaidOut,
+    Expired,
+}
+
+#[account]
+pub struct InsurancePolicy {
+    pub farmer:            Pubkey,
+    pub policy_type:       PolicyType,
+    pub status:            PolicyStatus,
+    pub premium_paid:      u64,
+    pub coverage_amount:   u64,
+    pub trigger_threshold: i64,
+    pub region_id:         String,
+    pub created_at:        i64,
+    pub bump:              u8,
+}
+
+impl InsurancePolicy {
+    pub const LEN: usize = 8
+        + 32   // farmer
+        + 2    // policy_type
+        + 2    // status
+        + 8    // premium_paid
+        + 8    // coverage_amount
+        + 8    // trigger_threshold
+        + (4 + 32) // region_id
+        + 8    // created_at
+        + 1;   // bump
+}
+
+#[account]
+pub struct OracleData {
+    pub authority:      Pubkey,
+    pub region_id:      String,
+    pub rainfall_mm:    i64,
+    pub flood_level_cm: i64,
+    pub last_updated:   i64,
+    pub bump:           u8,
+}
+
+impl OracleData {
+    pub const LEN: usize = 8
+        + 32       // authority
+        + (4 + 32) // region_id
+        + 8        // rainfall_mm
+        + 8        // flood_level_cm
+        + 8        // last_updated
+        + 1;       // bump
+}
+
+#[account]
+pub struct ProgramTreasury {
+    pub authority: Pubkey,
+    pub bump:      u8,
+}
+
+impl ProgramTreasury {
+    pub const LEN: usize = 8 + 32 + 1;
 }
