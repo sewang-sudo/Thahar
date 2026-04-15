@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 anchor-program/target/deploy/*-keypair.json
 anchor-program/.anchor/
+venv/
+node_modules/
+__pycache__/
+.env
