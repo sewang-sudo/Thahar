@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --canvas: #F0F9FF;
+  --cyan: #06B6D4;
+  --cyan-deep: #06ADCA;
+  --citrine: #A5F76A;
+  --text-head: #0c0a09;
+  --text-body: #44403c;
+  --text-muted: #78716c;
+  --border: rgba(6, 173, 202, 0.2);
+  --border-strong: rgba(6, 173, 202, 0.4);
+  --glass: rgba(240, 249, 255, 0.4);
+  --white: #ffffff;
+  --error: #dc2626;
+  --success: #16a34a;
+  --warn: #b45309;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--canvas);
+  color: var(--text-body);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-head);
+}
+
+/* Calibrate Button — machined block */
+.btn-calibrate {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  border-radius: 14px;
+  border: none;
+  background: var(--cyan-deep);
+  color: #fff;
+  cursor: default;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.15);
+  outline: none;
+  display: inline-block;
+}
+
+.btn-calibrate:active {
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 3px rgba(255, 255, 255, 0.1);
+}
+
+.btn-calibrate:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Ghost button */
+.btn-ghost {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.7em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-body);
+  cursor: default;
+  outline: none;
+}
+
+/* Telemetry box — citrine squircle */
+.telemetry-box {
+  background: var(--citrine);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 16px 20px;
+}
+
+/* Glass nav vellum */
+.glass-nav {
+  background: rgba(240, 249, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Card */
+.cryo-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+/* Label / status text */
+.label-mono {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.7em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Input */
+.cryo-input {
+  width: 100%;
+  padding: 11px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--text-head);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.cryo-input:focus {
+  border-color: var(--cyan-deep);
+  background: #fff;
+}
+
+/* Select */
+.cryo-select {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: rgba(240, 249, 255, 0.6);
+  color: var(--text-head);
+  cursor: default;
+  outline: none;
+}
+
+/* Page wrapper */
+.page-wrap {
+  padding-top: 72px;
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+.page-inner {
+  padding: 48px 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Animate in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeUp 0.4s ease both;
+}
