@@ -9,7 +9,7 @@ dotenv.config();
 const REGIONS = [
   { id: 'khotang',    lat: 27.02, lon: 86.83 },
   { id: 'kathmandu',  lat: 27.71, lon: 85.31 },
-  { id: 'terai',      lat: 27.00, lon: 84.50 },
+  { id: 'chitwan',      lat: 27.53, lon: 84.35 },
 ];
 
 async function getRainfall(lat, lon) {

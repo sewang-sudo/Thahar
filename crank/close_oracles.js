@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 dotenv.config();
 
-const REGIONS = ['kathmandu', 'chitwan', 'pokhara', 'butwal', 'khotang', 'terai'];
+const REGIONS = ['kathmandu', 'chitwan', 'pokhara', 'butwal', 'khotang'];
 
 async function main() {
   const connection = new Connection(process.env.RPC_URL, 'confirmed');

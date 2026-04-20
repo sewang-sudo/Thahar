@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchOracleData } from '../utils/thahar';
 
-const REGIONS = ['kathmandu-1', 'pokhara-1', 'chitwan-1', 'butwal-1'];
+const REGIONS = ['kathmandu', 'khotang', 'chitwan'];
 
 export default function Oracle() {
   const [oracles, setOracles] = useState([]);
