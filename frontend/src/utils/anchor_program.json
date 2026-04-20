@@ -8,6 +8,59 @@
   },
   "instructions": [
     {
+      "name": "close_oracle",
+      "discriminator": [
+        74,
+        239,
+        49,
+        223,
+        206,
+        52,
+        189,
+        123
+      ],
+      "accounts": [
+        {
+          "name": "oracle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "region_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "region_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "close_policy",
       "discriminator": [
         55,
@@ -71,6 +124,74 @@
           "relations": [
             "policy"
           ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "expire_policy",
+      "discriminator": [
+        149,
+        24,
+        43,
+        100,
+        240,
+        50,
+        39,
+        124
+      ],
+      "accounts": [
+        {
+          "name": "policy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "farmer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "farmer",
+          "writable": true
         },
         {
           "name": "system_program",
@@ -406,7 +527,7 @@
           }
         },
         {
-          "name": "authority",
+          "name": "caller",
           "writable": true,
           "signer": true
         },
@@ -527,6 +648,16 @@
       "code": 6010,
       "name": "CannotCancelFinalMonth",
       "msg": "Cannot cancel policy in the final month"
+    },
+    {
+      "code": 6011,
+      "name": "PolicyNotExpired",
+      "msg": "Policy has not expired yet"
+    },
+    {
+      "code": 6012,
+      "name": "PolicyTooNew",
+      "msg": "Policy must be at least 7 days old before triggering payout"
     }
   ],
   "types": [
@@ -595,10 +726,6 @@
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "authority",
-            "type": "pubkey"
-          },
           {
             "name": "region_id",
             "type": "string"

@@ -6,6 +6,7 @@ module.exports = {
         stream: require.resolve("stream-browserify"),
         buffer: require.resolve("buffer/"),
         process: require.resolve("process/browser"),
+        vm: false,
       };
       return config;
     },
