@@ -90,6 +90,14 @@ On Solana it works. Low fees mean small farmers can actually use this.
 No legal identity required. Just a wallet.
 
 ---
+## Live Demo
+Frontend: https://thahar.vercel.app
+Program ID: 3o7dXUGpic6U7AsCpEwv4ifVp4w2B4waHk3ScbjT1NU2
+Network: Solana Devnet
+
+## Running the Oracle Crank
+cd crank
+node crank.js
 
 ## Built For
 Colosseum Frontier Hackathon 2026
