@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { registerPolicy, payPremium } from '../utils/thahar';
+import AIAdvisor from '../components/AIAdvisor';
 
 const POLICY_TYPES = ['Drought', 'Flood', 'Both'];
 const REGIONS = ['kathmandu-1', 'pokhara-1', 'chitwan-1', 'butwal-1'];
@@ -229,6 +230,11 @@ export default function Home({ notify, toNPR }) {
             )}
           </div>
         )}
+      </section>
+            {/* AI Advisor */}
+      <section className="section">
+        <h2 className="section-title">AI Crop Risk Advisor</h2>
+        <AIAdvisor />
       </section>
     </div>
   );

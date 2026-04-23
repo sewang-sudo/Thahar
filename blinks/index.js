@@ -9,7 +9,10 @@ import idl from './idl.json' with{type: 'json'};
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin:'*',
+  methods:['GET', 'POST']
+}));
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -85,6 +88,41 @@ app.post('/api/blink/register', async (req, res) => {
       transaction: base64,
       message: 'Register your crop insurance policy on Thahar.',
     });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+app.post('/api/ai-advice', async (req, res) => {
+  try {
+    const { crop, region, season } = req.body;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a crop insurance advisor for Nepali farmers. Give simple, short advice. Max 3 sentences. Recommend a risk level (low/medium/high) and a coverage amount in SOL between 0.1 and 2 SOL.',
+          },
+          {
+            role: 'user',
+            content: `Crop: ${crop}, Region: ${region}, Season: ${season}`,
+          },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    console.log('Groq response:', JSON.stringify(data));
+    const advice = data.choices[0].message.content;
+    res.json({ advice });
 
   } catch (err) {
     console.error(err);
