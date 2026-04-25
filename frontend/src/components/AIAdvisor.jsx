@@ -5,12 +5,12 @@ const AIAdvisor = () => {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
 
-  const speak = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  };
+const speak = (text) => {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.9;
+  utterance.lang = 'en-GB';
+  window.speechSynthesis.speak(utterance);
+};
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
