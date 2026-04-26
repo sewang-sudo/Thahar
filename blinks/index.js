@@ -3,19 +3,20 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
 import pkg from '@coral-xyz/anchor';
-const {AnchorProvider, Program, BN} =pkg;
-import idl from './idl.json' with{type: 'json'};
+const {AnchorProvider, Program, BN} = pkg;
+import idl from './idl.json' with { type: 'json' };
 
 dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin:'*',
-  methods:['GET', 'POST']
+  origin: '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const PROGRAM_ID = process.env.PROGRAM_ID;
 const RPC_URL = process.env.RPC_URL;
 
@@ -37,7 +38,24 @@ const provider = new AnchorProvider(connection, wallet, {
 
 const program = new Program(idl, provider);
 
+app.get('/actions.json', (req, res)=> {
+  res.json({
+    rules: [
+      {
+        pathPattern: '/api/blink',
+        apiPath: '/api/blink',
+      },
+      {
+        pathPattern: '/api/blink/register',
+        apiPath: '/api/blink/register',
+      }
+    ]
+  });
+});
+
 app.get('/api/blink', (req, res) => {
+  res.set('X-Action-Version', '1');
+  res.set('X-Blockchain-Ids', 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1');
   res.json({
     title: 'Thahar Crop Insurance',
     description: 'Register your crop insurance policy on Solana. Protect your harvest.',
@@ -56,27 +74,39 @@ app.get('/api/blink', (req, res) => {
 
 app.post('/api/blink/register', async (req, res) => {
   try {
-    const { account } = req.body;
-    const farmerPubkey = new PublicKey(account);
+    const { account }= req.body;
+z
+    if (!account) {
+      return res.status(400).json({ error: 'account is required' });
+    }
+
+    let farmerPubkey;
+    try {
+      farmerPubkey = new PublicKey(account);
+    } catch {
+      return res.status(400).json({ error: 'invalid account address' });
+    }
 
     const [policyPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('policy'), farmerPubkey.toBuffer()],
       new PublicKey(PROGRAM_ID)
     );
+
     const transaction = await program.methods
-  .registerPolicy(
-    { crop : {} },
-    new BN(1000000000),
-    new BN(50),
-    'kathmandu-1',
-    180,
-  )
-  .accounts({
-    farmer: farmerPubkey,
-    policy: policyPda,
-    systemProgram: PublicKey.default,
-  })
-  .transaction();
+      .registerPolicy(
+        { crop: {} },
+        new BN(1000000000),
+        new BN(50),
+        'kathmandu-1',
+        180,
+      )
+      .accounts({
+        farmer: farmerPubkey,
+        policy: policyPda,
+        systemProgram: PublicKey.default,
+      })
+      .transaction();
+
     transaction.feePayer = farmerPubkey;
     const { blockhash } = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
@@ -95,12 +125,17 @@ app.post('/api/blink/register', async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
+
 app.post('/api/ai-advice', async (req, res) => {
   try {
     const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'messages array is required' });
+    }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -118,9 +153,9 @@ When a farmer asks about risk or advice, give short advice in max 2 sentences. N
 When a farmer confirms they want to register a policy, respond ONLY with this exact JSON and nothing else, no extra text:
 {"action":"register","coverage":1.5,"message":"Registering your policy now."}
 Adjust coverage between 0.1 and 2.0 SOL based on risk.
-If you include any text before or after the JSON, it will break the system and do not say Rohit sharma policy, its Thahar(Thahar) like : since you are intrested in Thahar.`,
+If you include any text before or after the JSON, it will break the system.`,
           },
-            ...messages,
+          ...messages,
         ],
       }),
     });
@@ -131,7 +166,7 @@ If you include any text before or after the JSON, it will break the system and d
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
 
