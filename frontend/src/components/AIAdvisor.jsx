@@ -20,7 +20,7 @@ const AIAdvisor = () => {
         return;
       }
       const walletPubkey = window.solana.publicKey.toString();
-      const response = await fetch('http://localhost:3001/api/blink/register', {
+      const response = await fetch('https://heroic-empathy-production-e5c3.up.railway.app/api/blink/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: walletPubkey }),
@@ -63,7 +63,7 @@ const updatedMessages = [...messages, { role: 'user', content: userMessage }];
 setMessages(updatedMessages);
 
 try {
-  const response = await fetch('http://localhost:3001/api/ai-advice', {
+  const response = await fetch('https://heroic-empathy-production-e5c3.up.railway.app/api/ai-advice', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: updatedMessages }),
