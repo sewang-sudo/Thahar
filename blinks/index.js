@@ -76,7 +76,7 @@ app.get('/api/blink', (req, res) => {
 app.post('/api/blink/register', async (req, res) => {
   try {
     const { account }= req.body;
-z
+    
     if (!account) {
       return res.status(400).json({ error: 'account is required' });
     }
@@ -133,7 +133,7 @@ z
 const aiLimiter = rateLimit({
   windowMs :  60 * 1000,
   max : 10,
-  message = {error : 'Too many request, please try again later.'}
+  message : {error : 'Too many request, please try again later.'}
 });
 
 app.post('/api/ai-advice', aiLimiter, async (req, res) => {
