@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
 import pkg from '@coral-xyz/anchor';
 const {AnchorProvider, Program, BN} = pkg;
@@ -129,7 +130,13 @@ z
   }
 });
 
-app.post('/api/ai-advice', async (req, res) => {
+const aiLimiter = rateLimit({
+  windowMs :  60 * 1000,
+  max : 10,
+  message = {error : 'Too many request, please try again later.'}
+});
+
+app.post('/api/ai-advice', aiLimiter, async (req, res) => {
   try {
     const { messages } = req.body;
 

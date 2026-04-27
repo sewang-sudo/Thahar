@@ -19,7 +19,7 @@ pub struct UpdateOracle<'info> {
         mut,
         constraint = caller.key() == CRANK_AUTHORITY @ ThaharError::UnauthorizedOracle
     )]
-    pub caller : Signer<'info>,
+    pub caller : Signer<'info>
     pub system_program: Program<'info, System>,
 }
 

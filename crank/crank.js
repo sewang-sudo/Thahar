@@ -53,7 +53,7 @@ async function main() {
         console.error(`❌ ${region.id} failed:`, err.message);
       }
     }
-    console.log('⏳ Sleeping 1 hour...');
+    console.log('⏳ Sleeping 12 hour...');
     await new Promise(r => setTimeout(r, 12*60 * 60 * 1000));z
   }
 }
