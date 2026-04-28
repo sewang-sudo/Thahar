@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useWallet }from '@solana/wallet-adapter-react';
 
 const AIAdvisor = () => {
+  const { publicKey, signTransaction, connected} = useWallet();
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
@@ -15,25 +17,32 @@ const AIAdvisor = () => {
 
   const registerPolicy = async () => {
     try {
-      if (!window.solana || !window.solana.isPhantom) {
+      if (!connected) {
         speak('Please connect your Phantom wallet first.');
         return;
       }
-      const walletPubkey = window.solana.publicKey.toString();
+      //get publickey
+      const walletPubkey = publicKey.toString();
+
+      //railway
       const response = await fetch('https://heroic-empathy-production-e5c3.up.railway.app/api/blink/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: walletPubkey }),
       });
+      //parse response
       const data = await response.json();
       if (!data.transaction) {
       console.error('No transaction returned:', data);
       speak('Registration failed. Please try again.');
       return;
       }
+      //build transaction!!
       const { Transaction } = await import('@solana/web3.js');
       const tx = Transaction.from(Buffer.from(data.transaction, 'base64'));
-      await window.solana.signTransaction(tx);
+       //signing once
+      await signTransaction(tx);
+
       speak('Your crop insurance policy has been registered on Solana. You are now protected.');
       setResult('Policy registered successfully on Solana.');
     } catch (err) {
