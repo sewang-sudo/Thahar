@@ -1,12 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet }from '@solana/wallet-adapter-react';
+import { useSearchParams } from 'react-router-dom';
+import { generateDappKeypair, buildConnectURL, decryptPayload} from '../utils/phantomDeepLink.js';
 
 const AIAdvisor = () => {
+  const [searchParams] = useSearchParams();
   const { publicKey, signTransaction, connected} = useWallet();
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [messages, setMessages] = useState( []);
+  const [dappKeypair, setDappKeypair] = useState( null);
+  const [mobileWallet, setMobileWallet] = useState(null);
+
+  useEffect(() => {
+  const keypair = generateDappKeypair();
+  setDappKeypair(keypair);
+  
+  const phantomKey = searchParams.get('phantom_encryption_public_key');
+  const data = searchParams.get('data');
+  const nonce = searchParams.get('nonce');
+
+  if (phantomKey && data && nonce && keypair){
+    const wallet = decryptPayload(data, nonce, phantomKey, keypair.secretKey);
+    setMobileWallet(wallet.public_key);
+      }
+  },[]);
 
   const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -17,12 +36,12 @@ const AIAdvisor = () => {
 
   const registerPolicy = async () => {
     try {
-      if (!connected) {
+      if (!connected && !mobileWallet) {
         speak('Please connect your Phantom wallet first.');
         return;
       }
       //get publickey
-      const walletPubkey = publicKey.toString();
+      const walletPubkey = mobileWallet || publicKey?.toString();
 
       //railway
       const response = await fetch('https://heroic-empathy-production-e5c3.up.railway.app/api/blink/register', {
@@ -65,8 +84,8 @@ const AIAdvisor = () => {
 
     recognition.onresult = async (event) => {
       const userMessage = event.results[0][0].transcript;
-setListening(false);
-setLoading(true);
+      setListening(false);
+      setLoading(true);
 
 const updatedMessages = [...messages, { role: 'user', content: userMessage }];
 setMessages(updatedMessages);
@@ -106,6 +125,8 @@ try {
     recognition.start();
   };
 
+  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
+
   return (
     <div className="ai-advisor">
       <h2>🎙️ AI Crop Risk Advisor</h2>
@@ -117,6 +138,12 @@ try {
       >
         {listening ? '🎙️ Listening...' : loading ? '⏳ Analyzing...' : '🎙️ Ask AI'}
       </button>
+      {isMobile && !connected && !mobileWallet && (
+        <button onClick={() => window.location.href = buildConnectURL(dappKeypair.publicKey, window.location.href)}
+          className = "cryo-btn">
+              🔗 Connect Phantom
+          </button>
+      )}
       {result && (
         <div className="advice-result">
           <p>{result}</p>

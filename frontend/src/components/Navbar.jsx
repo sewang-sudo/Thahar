@@ -5,7 +5,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-
+  
   const links = [
     { path: '/',          label: 'Home'       },
     { path: '/policies',  label: 'My Policies' },
