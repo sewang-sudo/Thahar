@@ -22,9 +22,14 @@ const AIAdvisor = () => {
   const nonce = searchParams.get('nonce');
 
   if (phantomKey && data && nonce && keypair){
+    try {
     const wallet = decryptPayload(data, nonce, phantomKey, keypair.secretKey);
     setMobileWallet(wallet.public_key);
       }
+      catch (err){
+        setResult('Decrypt error:' +err.message);
+      }
+    }
   },[]);
 
   const speak = (text) => {
