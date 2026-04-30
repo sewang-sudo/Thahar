@@ -164,6 +164,9 @@ try {
               🔗 Connect Phantom
           </button>
       )}
+      {mobileWallet && (
+        <p style={{color: 'green'}}>✅ Wallet connected: {mobileWallet.slice(0,6)}...{mobileWallet.slice(-4)}</p>
+      )}
       {result && (
         <div className="advice-result">
           <p>{result}</p>
