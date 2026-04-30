@@ -36,6 +36,8 @@ const AIAdvisor = () => {
   const data = searchParams.get('data');
   const nonce = searchParams.get('nonce');
 
+  setResult('types:' + typeof phantomKey + '' + typeof data + ''+ typeof nonce); 
+
   if (phantomKey && data && nonce && keypair){
     try {
     const wallet = decryptPayload(data, nonce, phantomKey, keypair.secretKey);
