@@ -1,3 +1,5 @@
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 import { useState, useEffect } from 'react';
 import { useWallet }from '@solana/wallet-adapter-react';
 import { useSearchParams } from 'react-router-dom';
@@ -14,7 +16,20 @@ const AIAdvisor = () => {
   const [mobileWallet, setMobileWallet] = useState(null);
 
   useEffect(() => {
-  const keypair = generateDappKeypair();
+    let keypair;
+    const saved = localStorage.getItem('dappKeypair');
+
+    if (saved == null){
+      keypair = generateDappKeypair();
+      localStorage.setItem('dappKeypair', JSON.stringify(Array.from(keypair.secretKey)));
+    } else {
+      const secretKey = Uint8Array.from(JSON.parse(saved));
+      const naclKeypair= nacl.box.keyPair.fromSecretKey(secretKey);
+      keypair ={
+        publicKey: bs58.encode(naclKeypair.publicKey),
+        secretKey: naclKeypair.secretKey,     
+      }
+    }
   setDappKeypair(keypair);
   
   const phantomKey = searchParams.get('phantom_encryption_public_key');
