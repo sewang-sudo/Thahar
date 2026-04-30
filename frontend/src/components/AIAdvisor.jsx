@@ -3,7 +3,7 @@ import bs58 from 'bs58';
 import { useState, useEffect } from 'react';
 import { useWallet }from '@solana/wallet-adapter-react';
 import { useSearchParams } from 'react-router-dom';
-import { generateDappKeypair, buildConnectURL, decryptPayload} from '../utils/phantomDeepLink.js';
+import { generateDappKeypair, buildConnectURL, decryptPayload, buildSignURL} from '../utils/phantomDeepLink.js';
 
 const AIAdvisor = () => {
   const [searchParams] = useSearchParams();
@@ -43,6 +43,7 @@ const AIAdvisor = () => {
     const wallet = decryptPayload(data, nonce, phantomKey, keypair.secretKey);
 
     setMobileWallet(wallet.public_key);
+    localStorage.setItem('phantomkey', phantomKey);
     setResult('DEBUG: wallet set to' + wallet.public_key?.slice(0,8));
       }
       catch (err){
@@ -64,6 +65,10 @@ const AIAdvisor = () => {
         speak('Please connect your Phantom wallet first.');
         return;
       }
+      const saved = localStorage.getItem('dappKeypair');
+      const secretKey = Uint8Array.from(JSON.parse(saved));
+      const naclKeypair = nacl.box.keyPair.fromSecretKey(secretKey);
+      const dappPublicKey = bs58.encode(naclKeypair.publicKey);
       //get publickey
       const walletPubkey = mobileWallet || publicKey?.toString();
 
@@ -83,11 +88,16 @@ const AIAdvisor = () => {
       //build transaction!!
       const { Transaction } = await import('@solana/web3.js');
       const tx = Transaction.from(Buffer.from(data.transaction, 'base64'));
-       //signing once
-      await signTransaction(tx);
+      //if/else
+        if (mobileWallet){
+          window.location.href=buildSignURL(dappPublicKey,'https://thahar.vercel.app', data.transaction);
+        }
+        else{
+        await signTransaction(tx);
+            speak('Your crop insurance policy has been registered on Solana. You are now protected.');
+            setResult('Policy registered successfully on Solana.');
+      }
 
-      speak('Your crop insurance policy has been registered on Solana. You are now protected.');
-      setResult('Policy registered successfully on Solana.');
     } catch (err) {
       speak('Registration failed. Please try again.');
       setResult('Registration failed: ' + err.message);
