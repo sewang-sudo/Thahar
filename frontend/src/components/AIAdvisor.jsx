@@ -39,10 +39,12 @@ const AIAdvisor = () => {
   if (phantomKey && data && nonce && keypair){
     try {
     const wallet = decryptPayload(data, nonce, phantomKey, keypair.secretKey);
+
     setMobileWallet(wallet.public_key);
+    setResult('DEBUG: wallet set to' + wallet.public_key?.slice(0,8));
       }
       catch (err){
-        setResult('Decrypt error:' +err.message);
+        setResult('Decrypt error:' +err.message + '| phantomKey:' + phantomKey?.slice(0,8));
       }
     }
   },[]);
