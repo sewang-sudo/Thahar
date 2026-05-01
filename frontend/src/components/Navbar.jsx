@@ -5,6 +5,8 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
+  const isInPhantom = window.phantom?.solana?.isPhantom;
   
   const links = [
     { path: '/',          label: 'Home'       },
@@ -35,7 +37,15 @@ export default function Navbar() {
       </div>
 
       <div className="nav-actions">
-        <WalletMultiButton className="cryo-wallet-btn" />
+        {isMobile && !isInPhantom ? (
+          <button
+            onClick={()=> window.location.href = 'https://phantom.app/ul/browse/https://thahar.vercel.app'}
+            className="cryo-wallet-btn">
+              🔗 Open in Phantom
+          </button>
+        ): (
+          <WalletMultiButton className="cryo-wallet-btn"/>
+        )}
         <button
           className="hamburger"
           onClick={() => setMenuOpen(o => !o)}
