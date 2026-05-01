@@ -9,6 +9,8 @@ const REGIONS = ['kathmandu-1', 'pokhara-1', 'chitwan-1', 'butwal-1'];
 
 export default function Home({ notify, toNPR }) {
   const wallet = useWallet();
+  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
+  const isInPhantom = window.phantom?.solana?.isPhantom;
   const [form, setForm] = useState({
     coverageAmount: '',
     triggerThreshold: '',
@@ -115,7 +117,15 @@ export default function Home({ notify, toNPR }) {
         {!wallet.connected ? (
           <div className="connect-prompt cryo-card">
             <p>Connect your wallet to register a policy</p>
-            <WalletMultiButton className="cryo-wallet-btn" />
+            {isMobile && !isInPhantom ? (
+              <button
+              onClick={() => window.location.href = 'phantom://browse/https%3A%2F%2Fthahar.vercel.app'}
+              className="cryo-wallet-btn">
+                🔗 Open in Phantom
+                </button>
+                ) : (
+                <WalletMultiButton className="cryo-wallet-btn" />
+                )}
           </div>
         ) : (
           <div className="cryo-card form-card">
