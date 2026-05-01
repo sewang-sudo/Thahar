@@ -172,14 +172,6 @@ try {
       >
         {listening ? '🎙️ Listening...' : loading ? '⏳ Analyzing...' : '🎙️ Ask AI'}
       </button>
-      {isMobile && !connected && !mobileWallet && (
-        <button onClick={() => {
-          window.location.href = 'https://phantom.app/ul/browse/https://thahar.vercel.app'
-        }}
-          className = "cryo-btn">
-              🔗 Connect Phantom
-          </button>
-      )}
       {mobileWallet && (
         <p style={{color: 'green'}}>✅ Wallet connected: {mobileWallet.slice(0,6)}...{mobileWallet.slice(-4)}</p>
       )}

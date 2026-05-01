@@ -39,7 +39,7 @@ export default function Navbar() {
       <div className="nav-actions">
         {isMobile && !isInPhantom ? (
           <button
-            onClick={()=> window.location.href = 'https://phantom.app/ul/browse/https%3A%2F%2Fthahar.vercel.app'}
+            onClick={()=> window.location.href = 'phantom://browse/https%3A%2F%2Fthahar.vercel.app'}
             className="cryo-wallet-btn">
               🔗 Open in Phantom
           </button>
