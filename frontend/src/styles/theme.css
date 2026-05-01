@@ -870,3 +870,18 @@ body {
     padding: 0.6rem 1rem;
   }
 }
+button.cryo-wallet-btn {
+  background: var(--onyx) !important;
+  color: #fff !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  height: 38px !important;
+  padding: 0 1.1rem !important;
+  transition: opacity 0.15s !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+button.cryo-wallet-btn:hover { opacity: 0.8 !important; }
+
