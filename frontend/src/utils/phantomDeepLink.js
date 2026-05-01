@@ -16,7 +16,8 @@ export function buildConnectURL(dappPublicKey, redirectURL){
         redirect_link: redirectURL,
         cluster: 'devnet',
     });
-    return `phantom://v1/connect?${params.toString()}`;
+    const query = params.toString();
+    return `intent://v1/connect?${query}#Intent;scheme=phantom;package=app.phantom;end`;
 }
 
 export function buildSignURL(dappPublicKey, redirectURL, transaction){
@@ -25,7 +26,8 @@ export function buildSignURL(dappPublicKey, redirectURL, transaction){
         redirect_link: redirectURL,
         payload: transaction,
     })
-    return `phantom://v1/signTransaction?${params.toString()}`;
+    const query = params.toString();
+    return `intent://v1/signTransaction?${query}#Intent;scheme=phantom;package=app.phantom;end`;
 }
 
 export function decryptPayload(data, nonce, phantomPublicKey, secretKey){
