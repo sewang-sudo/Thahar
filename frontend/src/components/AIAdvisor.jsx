@@ -174,10 +174,7 @@ try {
       </button>
       {isMobile && !connected && !mobileWallet && (
         <button onClick={() => {
-          localStorage.removeItem('dappKeypair');
-          const fresh = generateDappKeypair();
-          localStorage.setItem('dappKeypair', JSON.stringify(Array.from(fresh.secretKey)));
-          window.location.href = buildConnectURL(fresh.publicKey, 'https://thahar.vercel.app');
+          window.location.href = 'https://phantom.app/ul/browse/https://thahar.vercel.app'
         }}
           className = "cryo-btn">
               🔗 Connect Phantom
