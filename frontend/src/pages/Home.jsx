@@ -5,7 +5,7 @@ import { registerPolicy, payPremium } from '../utils/thahar';
 import AIAdvisor from '../components/AIAdvisor';
 
 const POLICY_TYPES = ['Drought', 'Flood', 'Both'];
-const REGIONS = ['kathmandu-1', 'pokhara-1', 'chitwan-1', 'butwal-1'];
+const REGIONS = ['kathmandu', 'khotang', 'chitwan'];
 
 export default function Home({ notify, toNPR }) {
   const wallet = useWallet();
@@ -244,7 +244,7 @@ export default function Home({ notify, toNPR }) {
             {/* AI Advisor */}
       <section className="section">
         <h2 className="section-title">AI Crop Risk Advisor</h2>
-        <AIAdvisor />
+        <AIAdvisor setForm={setForm}/>
       </section>
     </div>
   );
