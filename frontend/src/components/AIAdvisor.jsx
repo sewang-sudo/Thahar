@@ -17,8 +17,39 @@ const AIAdvisor = ({ setForm }) => {
     setResult(null);
     try {
       const oracleData = await fetchOracleData(region);
-      console.log(oracleData);
-      setResult({ error: JSON.stringify(oracleData)});
+      const rainfall = parseInt(oracleData.rainfallMm);
+      const flood = parseFloat(oracleData.floodLevelCm);
+
+      let riskLevel, coverage, reason; 
+
+      if (season === 'Monsoon' && rainfall <40){
+        riskLevel = 'High';
+        coverage = 2.0;
+        reason = 'Low rainfall in monsoon season means high drought risk.';
+      } else if (flood > 100 || (season === 'Monsoon' && rainfall >180)){
+        riskLevel = 'High';
+        coverage = 2.0;
+        reason = 'High flood levels detected in your region.';
+      } else if (rainfall <80) {
+        riskLevel = 'Medium';
+        coverage = 1.0;
+        reason = 'Moderate dought risk based on current rainfall.';
+      } else if (season == 'Winter') {
+        riskLevel = 'Low';
+        coverage = 0.5;
+        reason = 'Winter is dry season in Nepal. Low insurance risk.';
+      } else if (season === 'Spring' && rainfall <50){
+        riskLevel = 'Medium';
+        coverage = 1.0;
+        reason = 'Spring rainfall is low. Moderate drought risk ahead.';
+      } else {
+        riskLevel = 'Low';
+        coverage = 0.5;
+        reason = 'Conditions looks stable but insurance is still recomended.';
+      }
+
+      setResult({ riskLevel, coverage, reason, rainfall, flood});
+
     } catch (err) {
       setResult({ error: err.message});
     }
@@ -48,6 +79,20 @@ const AIAdvisor = ({ setForm }) => {
       <p style={{color: 'red'}}>{result.error}</p>
     )}
 
+    {result?.riskLevel && (
+      <div className="cryo-card" style={{marginTop: '1rem'}}>
+        <h3>Risk Level: {result.riskLevel === 'High' ? '🔴' : result.riskLevel === 'Medium' ? '🟡' : '🟢'} {result.riskLevel}</h3>
+        <p> {result.reason}</p>
+        <p> Current Rainfall: <strong>{result.rainfall} mm </strong></p>
+        <p> Recommended Coverage: <strong>{result.coverage} SOL</strong></p>
+        <button className='cryo-btn' onClick={() =>{
+          setForm(f => ({ ...f, coverageAmount: result.coverage, regionId: region}));
+          window.scrollTo({ top : 0, behavior: 'smooth'});
+        }}>
+          Register This Policy
+        </button>
+        </div>
+    )}
     </div>
   );
 };
