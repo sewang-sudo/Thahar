@@ -18,8 +18,9 @@ const AIAdvisor = ({ setForm }) => {
     try {
       const oracleData = await fetchOracleData(region);
       console.log(oracleData);
+      setResult({ error: JSON.stringify(oracleData)});
     } catch (err) {
-      console.error(err);
+      setResult({ error: err.message});
     }
     setLoading(false);
   };
@@ -43,6 +44,9 @@ const AIAdvisor = ({ setForm }) => {
     <button onClick={analyzeRisk} disabled={loading} className='cryo-btn'>
       {loading ? '⏳ Analyzing...' : '🔍 Analyze My Risk'}
     </button>
+    {result && (
+      <p style={{color: 'red'}}>{result.error}</p>
+    )}
 
     </div>
   );
