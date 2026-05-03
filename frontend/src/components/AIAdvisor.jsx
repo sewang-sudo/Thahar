@@ -87,7 +87,7 @@ const AIAdvisor = ({ setForm }) => {
         <p> Recommended Coverage: <strong>{result.coverage} SOL</strong></p>
         <button className='cryo-btn' onClick={() =>{
           setForm(f => ({ ...f, coverageAmount: result.coverage, regionId: region}));
-          window.scrollTo({ top : 4, behavior: 'smooth'});
+          document.getElementById('register-section').scrollIntoView({behavior: 'smooth'});
         }}>
           Register This Policy
         </button>

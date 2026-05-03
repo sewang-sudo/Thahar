@@ -112,7 +112,7 @@ export default function Home({ notify, toNPR }) {
       </section>
 
       {/* Register form */}
-      <section className="section">
+      <section className="section" id="register-section">
         <h2 className="section-title">Register a Policy</h2>
         {!wallet.connected ? (
           <div className="connect-prompt cryo-card">
