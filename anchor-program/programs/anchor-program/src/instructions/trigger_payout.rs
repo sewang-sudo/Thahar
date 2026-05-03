@@ -55,6 +55,11 @@ pub fn handle_trigger_payout(ctx: Context<TriggerPayout>) -> Result<()> {
             ThaharError::ThresholdNotBreached
         );
 
+        require!(
+            ctx.accounts.treasury.to_account_info().lamports() >= policy.coverage_amount,
+            ThaharError:: InsufficientTreasury
+        );
+
         policy.coverage_amount
     };
 

@@ -27,4 +27,6 @@ pub enum ThaharError {
     PolicyNotExpired,
     #[msg("Policy must be at least 7 days old before triggering payout")]
     PolicyTooNew,
+    #[msg("Treasury has insufficient funds for this payout")]
+    InsufficientTreasury,
 }
