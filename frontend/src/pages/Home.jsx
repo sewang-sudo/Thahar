@@ -6,8 +6,17 @@ import AIAdvisor from '../components/AIAdvisor';
 
 const POLICY_TYPES = ['Drought', 'Flood', 'Both'];
 const REGIONS = ['kathmandu', 'khotang', 'chitwan'];
+const CROPS = ['Rice', 'Maize', 'Wheat', 'Millet'];
+const SEASONS = ['Monsoon', 'Winter', 'Spring'];
 
-export default function Home({ notify, toNPR }) {
+const THRESHOLDS = {
+  'Rice': { 'Monsoon': 40, 'Spring': 30, 'Winter': 20},
+  'Maize': { 'Monsoon': 35, 'Spring': 25, 'Winter': 15},
+  'Wheat': { 'Monsoon': 30, 'Spring': 30, 'Winter': 20},
+  'Millet': { 'Monsoon': 35, 'Spring': 25, 'Winter': 15},
+};
+
+export default function Home({ notify, toNPR, toSOL}) {
   const wallet = useWallet();
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isInPhantom = window.phantom?.solana?.isPhantom;
@@ -20,6 +29,12 @@ export default function Home({ notify, toNPR }) {
   });
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('register'); // 'register' | 'premium' | 'done'
+  const [crop, setCrop] = useState( 'Rice');
+  const [season, setSeason] = useState('Monsoon');
+  const [adjustment, setAdjustment] = useState(0);
+
+  const baseThreshold = THRESHOLDS[crop][season];
+  const finalThreshold = baseThreshold + adjustment;
 
   const handleChange = e => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -27,12 +42,12 @@ export default function Home({ notify, toNPR }) {
 
   const handleRegister = async () => {
     if (!wallet.connected) return notify('Connect your wallet first', 'error');
-    if (!form.coverageAmount || !form.triggerThreshold) return notify('Fill all fields', 'error');
+    if (!form.coverageAmount) return notify('Fill all fields', 'error');
     setLoading(true);
     try {
       const sig = await registerPolicy(wallet, {
-        coverageAmount: parseFloat(form.coverageAmount) * 1e9,
-        triggerThreshold: parseInt(form.triggerThreshold),
+        coverageAmount: parseFloat(toSOL(parseFloat(form.coverageAmount))) * 1e9,
+        triggerThreshold: finalThreshold,
         regionId: form.regionId,
         policyType: parseInt(form.policyType),
         durationDays: parseInt(form.durationDays),
@@ -49,7 +64,7 @@ export default function Home({ notify, toNPR }) {
     if (!wallet.connected) return notify('Connect your wallet first', 'error');
     setLoading(true);
     try {
-      const premiumLamports = parseFloat(form.coverageAmount) * 1e9 * 0.05; // 5% premium
+      const premiumLamports = parseFloat(toSOL(parseFloat(form.coverageAmount))) * 1e9 * 0.05; // 5% premium
       const sig = await payPremium(wallet, premiumLamports);
       notify(`Premium paid! TX: ${sig.slice(0, 8)}...`);
       setStep('done');
@@ -147,7 +162,7 @@ export default function Home({ notify, toNPR }) {
               <div className="premium-step">
                 <h3 className="form-title">Step 2 — Pay Premium</h3>
                 <p className="form-sub">
-                  Premium: <strong>{(parseFloat(form.coverageAmount || 0) * 0.05).toFixed(4)} SOL</strong> (5% of coverage)
+                  Premium: <strong>{(parseFloat(toSOL(form.coverageAmount || 0)) * 0.05).toFixed(4)} SOL</strong> (5% of coverage)
                 </p>
                 <button
                   className="cryo-btn full-width"
@@ -162,45 +177,40 @@ export default function Home({ notify, toNPR }) {
                 <h3 className="form-title">Step 1 — Policy Details</h3>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Coverage Amount (SOL)</label>
+                    <label className="form-label">Coverage Amount (Rs.)</label>
                     <input
                       className="cryo-input"
                       name="coverageAmount"
                       type="number"
-                      placeholder="e.g. 2.5"
+                      placeholder="10,000"
                       value={form.coverageAmount}
                       onChange={handleChange}
                     />
-                    {form.coverageAmount && toNPR && (
+                    {form.coverageAmount && toSOL && (
                       <span style={{ fontSize: '12px', color: '#888', marginTop: '4px', display: 'block' }}>
-                        {toNPR(parseFloat(form.coverageAmount))}
+                        = {toSOL(parseFloat(form.coverageAmount))} SOL
                       </span>
                     )}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Rainfall Trigger Threshold (mm)</label>
-                    <input
-                      className="cryo-input"
-                      name="triggerThreshold"
-                      type="number"
-                      placeholder="e.g. 50"
-                      value={form.triggerThreshold}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Region</label>
-                    <select
-                      className="cryo-input"
-                      name="regionId"
-                      value={form.regionId}
-                      onChange={handleChange}
-                    >
-                      {REGIONS.map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
+                    <label className="form-label">Crop</label>
+                    <select className="cryo-input" 
+                    value={crop} 
+                    onChange={e => { setCrop(e.target.value); setAdjustment(0); }}>
+                      {CROPS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Season</label>
+                    <select
+                      className="cryo-input" 
+                      value={season} 
+                      onChange={ e => { setSeason(e.target.value); setAdjustment(0);}}>
+                        {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
                   <div className="form-group">
                     <label className="form-label">Policy Type</label>
                     <select
@@ -214,6 +224,7 @@ export default function Home({ notify, toNPR }) {
                       ))}
                     </select>
                   </div>
+                  
                   <div className="form-group">
                     <label className="form-label">Duration (days)</label>
                     <select
@@ -228,6 +239,29 @@ export default function Home({ notify, toNPR }) {
                       <option value={365}>365 days (1 year)</option>
                     </select>
                   </div>
+                  <div className='form-group'>
+                    <label className='form-label'>Rainfall Trigger Threshold (mm)</label>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                      <button className="cryo-btn" onClick={() => setAdjustment(a => Math.max(a-1, -5))} type="button">-</button>
+                      <span className="cryo-input" style={{ textAlign: 'center', minWidth: '80px' }}>{finalThreshold} mm</span>
+                      <button className="cryo-btn" onClick={() => setAdjustment(a => Math.min(a + 1, 5))} type="button">+</button>
+                    </div>
+                    <span style={{ fontSize: '12px', marginTop: '4px', display: 'block', color:Math.abs(adjustment) >= 3? '#ff4444' : '#888' }}>
+                      {adjustment === 0 ? `recommended: ${baseThreshold}mm for ${crop} in ${season}` :
+                      Math.abs(adjustment) === 5? '⚠️ Maximim adjustment reached' :
+                      Math.abs(adjustment) >=3 ?`⚠️ ${adjustment > 0? '+' : ''} ${adjustment}mm from recommended —  payout conditions may vary` :
+                      `Adjusted ${adjustment > 0? '+' : ''}${adjustment}mm from recommended`}
+                    </span>
+
+                    </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Region</label>
+                    <select className="cryo-input" name="regionId" value={form.regionId} onChange={handleChange}>
+                      {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+
                 </div>
                 <button
                   className="cryo-btn full-width"
@@ -241,7 +275,8 @@ export default function Home({ notify, toNPR }) {
           </div>
         )}
       </section>
-            {/* AI Advisor */}
+
+      {/* AI Advisor */}
       <section className="section">
         <h2 className="section-title">AI Crop Risk Advisor</h2>
         <AIAdvisor setForm={setForm}/>

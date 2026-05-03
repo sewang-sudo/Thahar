@@ -23,9 +23,14 @@ export default function App() {
     }).catch(() => setSolPrice(null));
   }, []);
 
+  const toSOL = (npr) => {
+    if (!solPrice || !npr) return '';
+    return (npr / solPrice).toFixed(4);
+  };
+
   const toNPR = (sol) => {
     if (!solPrice || !sol) return '';
-    return '\u2248 Rs. ' + Math.round(sol * solPrice).toLocaleString();
+    return '=Rs. ' + Math.round(sol * solPrice).toLocaleString();
   };
 
   const notify = (msg, type = 'success') => {
@@ -44,7 +49,7 @@ export default function App() {
             </div>
           )}
           <Routes>
-            <Route path="/" element={<Home notify={notify} toNPR={toNPR} />} />
+            <Route path="/" element={<Home notify={notify} toNPR={toNPR} toSOL={toSOL} />} />
             <Route path="/policies" element={<MyPolicies notify={notify} toNPR={toNPR} />} />
             <Route path="/oracle" element={<Oracle />} />
             <Route path="/admin" element={<Admin notify={notify} />} />

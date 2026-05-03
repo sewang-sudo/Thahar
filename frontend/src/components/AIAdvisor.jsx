@@ -19,6 +19,13 @@ const AIAdvisor = ({ setForm }) => {
       const oracleData = await fetchOracleData(region);
       const rainfall = parseInt(oracleData.rainfallMm);
       const flood = parseFloat(oracleData.floodLevelCm);
+      const thresholds = {
+        'Rice': { 'Monsoon': 40, 'Spring': 30, 'Winter': 20},
+        'Maize': { 'Monsoon': 35, 'Spring': 25, 'Winter': 15},
+        'Wheat': { 'Monsoon': 30, 'Spring': 30, 'Winter': 20},
+        'Millet': { 'Monsoon': 35, 'Spring': 25, 'Winter': 15},
+      };
+      const threshold = thresholds[crop][season];
 
       let riskLevel, coverage, reason; 
 
@@ -48,7 +55,7 @@ const AIAdvisor = ({ setForm }) => {
         reason = 'Conditions looks stable but insurance is still recomended.';
       }
 
-      setResult({ riskLevel, coverage, reason, rainfall, flood});
+      setResult({ riskLevel, coverage, reason, rainfall, flood, threshold});
 
     } catch (err) {
       setResult({ error: err.message});
@@ -84,9 +91,10 @@ const AIAdvisor = ({ setForm }) => {
         <h3>Risk Level: {result.riskLevel === 'High' ? '🔴' : result.riskLevel === 'Medium' ? '🟡' : '🟢'} {result.riskLevel}</h3>
         <p> {result.reason}</p>
         <p> Current Rainfall: <strong>{result.rainfall} mm </strong></p>
+        <p> Rainfall Trigger Threshold: <strong>{result.threshold} mm</strong></p>
         <p> Recommended Coverage: <strong>{result.coverage} SOL</strong></p>
         <button className='cryo-btn' onClick={() =>{
-          setForm(f => ({ ...f, coverageAmount: result.coverage, regionId: region}));
+          setForm(f => ({ ...f, coverageAmount: result.coverage, regionId: region, triggerThreshold: result.threshold }));
           document.getElementById('register-section').scrollIntoView({behavior: 'smooth'});
         }}>
           Register This Policy
