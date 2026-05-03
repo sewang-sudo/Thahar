@@ -80,6 +80,9 @@ app.post('/api/blink/register', async (req, res) => {
     if (!account) {
       return res.status(400).json({ error: 'account is required' });
     }
+    if ( account.length > 100) {
+      return res.status(400).json({ error: 'invalid account address' });
+    }
 
     let farmerPubkey;
     try {
@@ -98,7 +101,7 @@ app.post('/api/blink/register', async (req, res) => {
         { crop: {} },
         new BN(1000000000),
         new BN(50),
-        'kathmandu-1',
+        'kathmandu',
         180,
       )
       .accounts({

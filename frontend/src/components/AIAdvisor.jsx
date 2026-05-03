@@ -33,7 +33,7 @@ const AIAdvisor = ({ setForm }) => {
       } else if (rainfall <80) {
         riskLevel = 'Medium';
         coverage = 1.0;
-        reason = 'Moderate dought risk based on current rainfall.';
+        reason = 'Moderate drought risk based on current rainfall.';
       } else if (season == 'Winter') {
         riskLevel = 'Low';
         coverage = 0.5;
@@ -87,7 +87,7 @@ const AIAdvisor = ({ setForm }) => {
         <p> Recommended Coverage: <strong>{result.coverage} SOL</strong></p>
         <button className='cryo-btn' onClick={() =>{
           setForm(f => ({ ...f, coverageAmount: result.coverage, regionId: region}));
-          window.scrollTo({ top : 0, behavior: 'smooth'});
+          window.scrollTo({ top : 4, behavior: 'smooth'});
         }}>
           Register This Policy
         </button>

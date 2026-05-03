@@ -21,7 +21,7 @@ export default function MyPolicies({ notify, toNPR }) {
     if (!wallet.connected) return;
     setFetching(true);
     fetchPolicy(wallet)
-      .then(p => { console.log("POLICY:", JSON.stringify(p, null, 2)); setPolicy(p); })
+      .then(p => { setPolicy(p); })
       .catch(() => setPolicy(null))
       .finally(() => setFetching(false));
   }, [wallet.connected]);

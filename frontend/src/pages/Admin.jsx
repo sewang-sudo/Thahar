@@ -3,7 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { updateOracle, initializeTreasury } from '../utils/thahar';
 
-const REGIONS = ['kathmandu-1', 'pokhara-1', 'chitwan-1', 'butwal-1'];
+const REGIONS = ['kathmandu', 'khotang', 'chitwan'];
 
 export default function Admin({ notify }) {
   const wallet = useWallet();
