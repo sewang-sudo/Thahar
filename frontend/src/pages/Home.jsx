@@ -4,7 +4,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { registerPolicy, payPremium } from '../utils/thahar';
 import AIAdvisor from '../components/AIAdvisor';
 
-const POLICY_TYPES = ['Drought', 'Flood', 'Both'];
+const POLICY_TYPES = ['Drought'];
 const REGIONS = ['kathmandu', 'khotang', 'chitwan'];
 const CROPS = ['Rice', 'Maize', 'Wheat', 'Millet'];
 const SEASONS = ['Monsoon', 'Winter', 'Spring'];
