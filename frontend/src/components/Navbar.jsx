@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import ThaharLogo from '../assets/ThaharLogo.png';
 
 export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isInPhantom = window.phantom?.solana?.isPhantom;
-  
+
   const links = [
-    { path: '/',          label: 'Home'       },
-    { path: '/policies',  label: 'My Policies' },
-    { path: '/oracle',    label: 'Oracle Data' },
-    { path: '/admin',     label: 'Admin'       },
+    { path: '/',         label: 'Home'        },
+    { path: '/policies', label: 'My Policies' },
+    { path: '/oracle',   label: 'Oracle Data' },
+    { path: '/admin',    label: 'Admin'       },
   ];
 
   return (
     <nav className="cryo-nav">
-      <div className="nav-brand">
-        <span className="brand-icon">🌾</span>
-        <span className="brand-name">Thahar</span>
-        <span className="brand-tag">Protocol</span>
-      </div>
+
+      <Link to="/" className="nav-brand">
+        <img src={ThaharLogo} alt="Thahar" className="nav-logo-img" />
+      </Link>
 
       <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
         {links.map(l => (
@@ -39,12 +39,13 @@ export default function Navbar() {
       <div className="nav-actions">
         {isMobile && !isInPhantom ? (
           <button
-            onClick={()=> window.location.href = 'phantom://browse/https%3A%2F%2Fthahar.vercel.app'}
-            className="cryo-wallet-btn">
-              🔗 Open in Phantom
+            onClick={() => window.location.href = 'phantom://browse/https%3A%2F%2Fthahar.vercel.app'}
+            className="cryo-wallet-btn"
+          >
+            🔗 Open in Phantom
           </button>
-        ): (
-          <WalletMultiButton className="cryo-wallet-btn"/>
+        ) : (
+          <WalletMultiButton className="cryo-wallet-btn" />
         )}
         <button
           className="hamburger"
@@ -54,6 +55,7 @@ export default function Navbar() {
           ☰
         </button>
       </div>
+
     </nav>
   );
 }
