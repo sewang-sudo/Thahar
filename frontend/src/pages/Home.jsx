@@ -454,18 +454,6 @@ export default function Home({ notify, toNPR, toSOL }) {
 /* ── StepCard — own component so hooks are legal ── */
 function StepCard({ card }) {
   const [npOn,     setNpOn]     = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-
-  const handleSpeak = () => {
-    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
-    const text = npOn ? card.np : `Step ${card.step}. ${card.title}. ${card.desc}`;
-    const utt  = new SpeechSynthesisUtterance(text);
-    utt.lang   = npOn ? 'ne-NP' : 'en-US';
-    utt.rate   = 0.92;
-    utt.onend  = () => setSpeaking(false);
-    window.speechSynthesis.speak(utt);
-    setSpeaking(true);
-  };
 
   return (
     <div
@@ -488,17 +476,6 @@ function StepCard({ card }) {
         </p>
       )}
       <div className="step-card-footer">
-        <button
-          className="step-card-speak"
-          onClick={handleSpeak}
-          style={{
-            background:  speaking ? card.accent : card.iconBg,
-            color:       speaking ? '#fff'      : card.accent,
-            borderColor: card.border,
-          }}
-        >
-          🔊 {speaking ? 'Stop' : 'Listen'}
-        </button>
         <button className="step-card-translate" onClick={() => setNpOn(o => !o)}>
           {npOn ? '🇬🇧 EN' : '🇳🇵 NP'}
         </button>
