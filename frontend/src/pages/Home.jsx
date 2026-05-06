@@ -1,76 +1,127 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { registerPolicy, payPremium } from '../utils/thahar';
-import ThaharLogo from '../assets/ThaharLogo.png';
+import React, { useState, useEffect, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { registerPolicy, payPremium } from "../utils/thahar";
+import ThaharLogo from "../assets/ThaharLogo.png";
 
-const REGIONS  = ['kathmandu', 'khotang', 'chitwan'];
-const CROPS    = ['Rice', 'Maize', 'Wheat', 'Millet'];
-const SEASONS  = ['Monsoon', 'Winter', 'Spring'];
+const REGIONS = ["kathmandu", "khotang", "chitwan"];
+const CROPS = ["Rice", "Maize", "Wheat", "Millet"];
+const SEASONS = ["Monsoon", "Winter", "Spring"];
 const DURATIONS = [
-  { value: 30,  label: '30 days',  sub: 'Short term' },
-  { value: 90,  label: '90 days',  sub: 'One season' },
-  { value: 180, label: '180 days', sub: 'Half year'  },
-  { value: 365, label: '365 days', sub: 'Full year'  },
+  { value: 30, label: "30 days", sub: "Short term" },
+  { value: 90, label: "90 days", sub: "One season" },
+  { value: 180, label: "180 days", sub: "Half year" },
+  { value: 365, label: "365 days", sub: "Full year" },
 ];
 const CROP_META = {
-  Rice:   { emoji: '🌾', nepali: 'Dhan'  },
-  Maize:  { emoji: '🌽', nepali: 'Makai' },
-  Wheat:  { emoji: '🌿', nepali: 'Gahu'  },
-  Millet: { emoji: '🪨', nepali: 'Kodo'  },
+  Rice: { emoji: "🌾", nepali: "Dhan" },
+  Maize: { emoji: "🌽", nepali: "Makai" },
+  Wheat: { emoji: "🌿", nepali: "Gahu" },
+  Millet: { emoji: "🪨", nepali: "Kodo" },
 };
 const REGION_META = {
-  kathmandu: { emoji: '🏔', province: 'Bagmati Province' },
-  khotang:   { emoji: '🌄', province: 'Koshi Province'   },
-  chitwan:   { emoji: '🌿', province: 'Bagmati Province' },
+  kathmandu: { emoji: "🏔", province: "Bagmati Province" },
+  khotang: { emoji: "🌄", province: "Koshi Province" },
+  chitwan: { emoji: "🌿", province: "Bagmati Province" },
 };
 const THRESHOLDS = {
-  Rice:   { Monsoon: 40, Spring: 30, Winter: 20 },
-  Maize:  { Monsoon: 35, Spring: 25, Winter: 15 },
-  Wheat:  { Monsoon: 30, Spring: 30, Winter: 20 },
+  Rice: { Monsoon: 40, Spring: 30, Winter: 20 },
+  Maize: { Monsoon: 35, Spring: 25, Winter: 15 },
+  Wheat: { Monsoon: 30, Spring: 30, Winter: 20 },
   Millet: { Monsoon: 35, Spring: 25, Winter: 15 },
 };
 const MOCK_RAINFALL = { kathmandu: 38, khotang: 22, chitwan: 55 };
 
 const HOW_IT_WORKS = [
-  { emoji:'🔗', step:'01', title:'Connect Wallet',  desc:'Link your Phantom wallet. No signup, no paperwork — your wallet is your identity.', np:'आफ्नो Phantom वालेट जोड्नुहोस्। कुनै दर्ता वा कागजपत्र आवश्यक छैन।', bg:'#E6F1FB', border:'#B5D4F4', accent:'#185FA5', iconBg:'#B5D4F4' },
-  { emoji:'📋', step:'02', title:'Register Policy', desc:'Pick your region, crop, and season. Set your coverage amount.',                     np:'आफ्नो क्षेत्र, बाली र मौसम छान्नुहोस्।',                              bg:'#FAEEDA', border:'#FAC775', accent:'#854F0B', iconBg:'#FAC775' },
-  { emoji:'💳', step:'03', title:'Pay Premium',     desc:'Pay 5% of coverage as premium. Funds go straight to the on-chain treasury.',        np:'कवरेजको ५% प्रिमियम तिर्नुहोस्।',                                      bg:'#EEEDFE', border:'#CECBF6', accent:'#534AB7', iconBg:'#CECBF6' },
-  { emoji:'🌦', step:'04', title:'Oracle Monitors', desc:'Chainlink oracles track rainfall and temperature 24/7 against your thresholds.',     np:'Oracle ले वर्षा र तापमान २४/७ निगरानी गर्छ।',                          bg:'#E1F5EE', border:'#9FE1CB', accent:'#0F6E56', iconBg:'#9FE1CB' },
-  { emoji:'⚡', step:'05', title:'Auto Payout',     desc:'Threshold crossed? SOL lands in your wallet automatically — no claim needed.',       np:'सीमा पार भयो? SOL स्वतः तपाईंको वालेटमा आउँछ।',                       bg:'#EAF3DE', border:'#C0DD97', accent:'#3B6D11', iconBg:'#C0DD97' },
+  {
+    emoji: "🔗",
+    step: "01",
+    title: "Connect Wallet",
+    desc: "Link your Phantom wallet. No signup, no paperwork — your wallet is your identity.",
+    np: "आफ्नो Phantom वालेट जोड्नुहोस्। कुनै दर्ता वा कागजपत्र आवश्यक छैन।",
+    bg: "#E6F1FB",
+    border: "#B5D4F4",
+    accent: "#185FA5",
+    iconBg: "#B5D4F4",
+  },
+  {
+    emoji: "📋",
+    step: "02",
+    title: "Register Policy",
+    desc: "Pick your region, crop, and season. Set your coverage amount.",
+    np: "आफ्नो क्षेत्र, बाली र मौसम छान्नुहोस्।",
+    bg: "#FAEEDA",
+    border: "#FAC775",
+    accent: "#854F0B",
+    iconBg: "#FAC775",
+  },
+  {
+    emoji: "💳",
+    step: "03",
+    title: "Pay Premium",
+    desc: "Pay 5% of coverage as premium. Funds go straight to the on-chain treasury.",
+    np: "कवरेजको ५% प्रिमियम तिर्नुहोस्।",
+    bg: "#EEEDFE",
+    border: "#CECBF6",
+    accent: "#534AB7",
+    iconBg: "#CECBF6",
+  },
+  {
+    emoji: "🌦",
+    step: "04",
+    title: "Oracle Monitors",
+    desc: "Chainlink oracles track rainfall and temperature 24/7 against your thresholds.",
+    np: "Oracle ले वर्षा र तापमान २४/७ निगरानी गर्छ।",
+    bg: "#E1F5EE",
+    border: "#9FE1CB",
+    accent: "#0F6E56",
+    iconBg: "#9FE1CB",
+  },
+  {
+    emoji: "⚡",
+    step: "05",
+    title: "Auto Payout",
+    desc: "Threshold crossed? SOL lands in your wallet automatically — no claim needed.",
+    np: "सीमा पार भयो? SOL स्वतः तपाईंको वालेटमा आउँछ।",
+    bg: "#EAF3DE",
+    border: "#C0DD97",
+    accent: "#3B6D11",
+    iconBg: "#C0DD97",
+  },
 ];
 
 export default function Home({ notify, toNPR, toSOL }) {
-  const wallet      = useWallet();
-  const isMobile    = /Android|iPhone/i.test(navigator.userAgent);
+  const wallet = useWallet();
+  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isInPhantom = window.phantom?.solana?.isPhantom;
 
-  const [wizardStep,  setWizardStep]  = useState(1);
-  const [txStep,      setTxStep]      = useState('register');
-  const [loading,     setLoading]     = useState(false);
-  const [region,      setRegion]      = useState(null);
-  const [crop,        setCrop]        = useState(null);
-  const [season,      setSeason]      = useState(null);
-  const [duration,    setDuration]    = useState(null);
-  const [coverage,    setCoverage]    = useState('');
-  const [adjustment,  setAdjustment]  = useState(0);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [txStep, setTxStep] = useState("register");
+  const [loading, setLoading] = useState(false);
+  const [region, setRegion] = useState(null);
+  const [crop, setCrop] = useState(null);
+  const [season, setSeason] = useState(null);
+  const [duration, setDuration] = useState(null);
+  const [coverage, setCoverage] = useState("");
+  const [adjustment, setAdjustment] = useState(0);
 
-  const wizardRef  = useRef(null);
+  const wizardRef = useRef(null);
   const revealRefs = useRef([]);
-  const hiwRef     = useRef(null);
+  const hiwRef = useRef(null);
 
   // ── Scroll reveal ──────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      }),
-      { threshold: 0.1 }
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            observer.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.1 },
     );
-    revealRefs.current.forEach(el => el && observer.observe(el));
+    revealRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
@@ -87,96 +138,84 @@ export default function Home({ notify, toNPR, toSOL }) {
     if (!container) return;
 
     const SNAKE_SIZE = 110;
-    const r          = 14; // corner radius per constraint 2
+    const r = 14; // corner radius per constraint 2
 
     // Constraint 3: useRef for the live path element
     const pathRef = { current: null };
-    let   svgEl        = null;
-    let   totalLength  = 0;
+    let svgEl = null;
+    let totalLength = 0;
 
     // ── Build / rebuild the SVG and path ───────────────────────
     function drawPath() {
-      // Tear down previous SVG if it exists
       if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
       pathRef.current = null;
-      totalLength     = 0;
+      totalLength = 0;
 
-      // Constraint 3: SVG is absolute at top:0 left:0 inside the
-      //               relative-positioned container (hiw-grid-wrap).
-      svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svgEl.setAttribute('aria-hidden', 'true');
-      svgEl.style.cssText = [
-        'position:absolute',
-        'top:0',
-        'left:0',
-        'width:100%',
-        'height:100%',
-        'pointer-events:none',
-        'z-index:10',
-        'overflow:visible',
-      ].join(';');
-
-      // Insert before cards so it renders behind them (z-index handles layering)
-      container.style.position = 'relative';
-      container.insertBefore(svgEl, container.firstChild);
-
-      const cards = Array.from(container.querySelectorAll('.step-card-colored'));
+      const cards = Array.from(
+        container.querySelectorAll(".step-card-colored"),
+      );
       if (!cards.length) return;
 
-      // Constraint 3: All coordinates = card.getBoundingClientRect()
-      //               MINUS container.getBoundingClientRect() → zero-offset alignment.
-      const cRect = container.getBoundingClientRect();
+      const style = window.getComputedStyle(cards[0]);
+const b = parseFloat(style.borderLeftWidth) || 0;
 
-      let d = '';
+const coords = cards.map((card) => {
+  const isActive = card.classList.contains("active");
+  const shift = isActive ? 6 : 0;
+  const scale = isActive ? 1.01 : 1;
+  const w = card.offsetWidth * scale;
+  const h = card.offsetHeight * scale;
+  const x = card.offsetLeft + shift - (w - card.offsetWidth) / 2;
+  const y = card.offsetTop - (h - card.offsetHeight) / 2;
+  return { x, y, w, h };
+});
+      // Now insert SVG after measuring
+      svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgEl.setAttribute("aria-hidden", "true");
+      svgEl.style.cssText = [
+        "position:absolute",
+        "top:0",
+        "left:0",
+        "width:100%",
+        "height:100%",
+        "pointer-events:none",
+        "z-index:10",
+        "overflow:visible",
+      ].join(";");
+      container.style.position = "relative";
+      container.insertBefore(svgEl, container.firstChild);
 
-      cards.forEach((card, i) => {
-        const rect = card.getBoundingClientRect();
-
-        // Container-local coords
-        const x = rect.left   - cRect.left;
-        const y = rect.top    - cRect.top;
-        const w = rect.width;
-        const h = rect.height;
-
+      let d = "";
+      coords.forEach(({ x, y, w, h }, i) => {
         const entryX = x + r;
 
-        // Constraint 2: Exact path commands
         if (i === 0) d += `M ${entryX} ${y} `;
-        else         d += `L ${entryX} ${y} `;
+        else d += `L ${entryX} ${y} `;
 
-        d += `L ${x + w - r} ${y} `;                          // top edge
-        d += `A ${r} ${r} 0 0 1 ${x + w} ${y + r} `;         // top-right corner
-        d += `L ${x + w} ${y + h - r} `;                      // right edge
-        d += `A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} `;     // bottom-right corner
-        d += `L ${entryX} ${y + h} `;                         // bottom edge
+        d += `L ${x + w - r} ${y} `;
+        d += `A ${r} ${r} 0 0 1 ${x + w} ${y + r} `;
+        d += `L ${x + w} ${y + h - r} `;
+        d += `A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} `;
+        d += `L ${entryX} ${y + h} `;
 
-        // Constraint 2: Cubic Bezier connector to next card
-        if (i < cards.length - 1) {
-          const nRect  = cards[i + 1].getBoundingClientRect();
-          const nextY  = nRect.top - cRect.top;
+        if (i < coords.length - 1) {
+          const nextY = coords[i + 1].y;
           d += `C ${x - 2} ${y + h}, ${x - 2} ${nextY}, ${entryX} ${nextY} `;
         }
       });
 
-      // Build path, append to SVG (must be in DOM before getTotalLength())
-      const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      el.setAttribute('d', d);
-      el.setAttribute('fill', 'none');
-      el.setAttribute('stroke', HOW_IT_WORKS[0].accent);
-      el.setAttribute('stroke-width', '4');
-      el.setAttribute('stroke-linecap', 'round');
-      el.setAttribute('stroke-linejoin', 'round');
-      svgEl.appendChild(el); // ← must be in DOM first
+      const el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      el.setAttribute("d", d);
+      el.setAttribute("fill", "none");
+      el.setAttribute("stroke", HOW_IT_WORKS[0].accent);
+      el.setAttribute("stroke-width", "6");
+      el.setAttribute("stroke-linecap", "round");
+      el.setAttribute("stroke-linejoin", "round");
+      svgEl.appendChild(el);
 
-      // Now getTotalLength() is accurate
       totalLength = el.getTotalLength();
-
-      // Constraint 3 / Snake Dash Logic:
-      //   strokeDasharray  = "110 totalLength"
-      //   strokeDashoffset = 110  (fully hidden at t=0)
-      el.style.strokeDasharray  = `${SNAKE_SIZE} ${totalLength}`;
+      el.style.strokeDasharray = `${SNAKE_SIZE} ${totalLength}`;
       el.style.strokeDashoffset = `${SNAKE_SIZE}`;
-
       pathRef.current = el;
     }
 
@@ -192,45 +231,52 @@ export default function Home({ notify, toNPR, toSOL }) {
 
       // Constraint 3: head position via getPointAtLength
       const headDist = Math.min(p * totalLength, totalLength - 1);
-      const head     = el.getPointAtLength(headDist);
+      const head = el.getPointAtLength(headDist);
       // head.x / head.y are already in SVG/container-local space ✓
 
       // Constraint 3: Active-state detection — compare head.y (container-local)
       //               against each card's container-local top/bottom.
       const cRect = container.getBoundingClientRect();
-      const cards = Array.from(container.querySelectorAll('.step-card-colored'));
+      const cards = Array.from(
+        container.querySelectorAll(".step-card-colored"),
+      );
+cards.forEach((card, i) => {
+  const cardTop = card.offsetTop;
+  const cardBottom = card.offsetTop + card.offsetHeight;
+  const wasActive = card.classList.contains("active");
+  const isNowActive = head.y >= cardTop - 2 && head.y <= cardBottom + 2;
 
-      cards.forEach((card, i) => {
-        const rect  = card.getBoundingClientRect();
-        const cardTop    = rect.top    - cRect.top;
-        const cardBottom = rect.bottom - cRect.top;
+  if (isNowActive && !wasActive) {
+    card.classList.add("active");
+    card.style.boxShadow = `0 12px 24px ${HOW_IT_WORKS[i].accent}33`;
+    el.setAttribute("stroke", HOW_IT_WORKS[i].accent);
+    // Redraw after transition (0.4s)
+    setTimeout(drawPath, 420);
+  } else if (!isNowActive && wasActive) {
+    card.classList.remove("active");
+    card.style.boxShadow = "";
+    setTimeout(drawPath, 420);
+  } else if (isNowActive) {
+    el.setAttribute("stroke", HOW_IT_WORKS[i].accent);
+  }
+});
 
-        if (head.y >= cardTop - 2 && head.y <= cardBottom + 2) {
-          card.classList.add('active');
-          card.style.boxShadow = `0 12px 24px ${HOW_IT_WORKS[i].accent}33`;
-          el.setAttribute('stroke', HOW_IT_WORKS[i].accent);
-        } else {
-          card.classList.remove('active');
-          card.style.boxShadow = '';
-        }
-      });
     }
 
     // ── Scroll → progress mapping ───────────────────────────────
     function handleScroll() {
       if (!pathRef.current || !totalLength) return;
-      const rect       = container.getBoundingClientRect();
-      const winH       = window.innerHeight;
-      const scrollable = rect.height - winH;
-      let   progress;
 
-      if (scrollable <= 0) {
-        // Section shorter than viewport: drive by how far we've entered it
-        progress = Math.min(Math.max((winH - rect.bottom) / winH + 0.5, 0), 1);
-      } else {
-        // Section taller than viewport: drive by how far we've scrolled through it
-        progress = Math.min(Math.max(-rect.top / scrollable, 0), 1);
-      }
+      const rect = container.getBoundingClientRect();
+      const winH = window.innerHeight;
+
+      const start = winH;
+      const end = -rect.height;
+
+      const progress = Math.min(
+        Math.max((start - rect.top) / (start - end), 0),
+        1,
+      );
 
       moveSnake(progress);
     }
@@ -241,10 +287,10 @@ export default function Home({ notify, toNPR, toSOL }) {
       if (window.innerWidth >= 1024) {
         if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
         pathRef.current = null;
-        totalLength     = 0;
-        container.querySelectorAll('.step-card-colored').forEach(c => {
-          c.classList.remove('active');
-          c.style.boxShadow = '';
+        totalLength = 0;
+        container.querySelectorAll(".step-card-colored").forEach((c) => {
+          c.classList.remove("active");
+          c.style.boxShadow = "";
         });
         return;
       }
@@ -258,83 +304,121 @@ export default function Home({ notify, toNPR, toSOL }) {
       handleScroll();
     }, 800);
 
-    window.addEventListener('scroll', handleScroll,  { passive: true });
-    window.addEventListener('resize', handleResize,  { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
 
     // ── Cleanup ─────────────────────────────────────────────────
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
       if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
       if (container) {
-        container.querySelectorAll('.step-card-colored').forEach(card => {
-          card.classList.remove('active');
-          card.style.boxShadow = '';
+        container.querySelectorAll(".step-card-colored").forEach((card) => {
+          card.classList.remove("active");
+          card.style.boxShadow = "";
         });
       }
     };
   }, []);
 
-  const addRevealRef = el => {
+  const addRevealRef = (el) => {
     if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
   };
 
-  const baseThreshold  = crop && season ? THRESHOLDS[crop][season] : 40;
+  const baseThreshold = crop && season ? THRESHOLDS[crop][season] : 40;
   const finalThreshold = baseThreshold + adjustment;
-  const solAmount      = coverage && toSOL ? parseFloat(toSOL(parseFloat(coverage))) : 0;
-  const premiumSOL     = (solAmount * 0.05).toFixed(4);
+  const solAmount =
+    coverage && toSOL ? parseFloat(toSOL(parseFloat(coverage))) : 0;
+  const premiumSOL = (solAmount * 0.05).toFixed(4);
 
   function getRisk() {
-    if (!region || !crop || !season) return { level: 'low', label: 'Low Risk', desc: 'Select your details to see risk.' };
-    const rainfall  = MOCK_RAINFALL[region] || 40;
+    if (!region || !crop || !season)
+      return {
+        level: "low",
+        label: "Low Risk",
+        desc: "Select your details to see risk.",
+      };
+    const rainfall = MOCK_RAINFALL[region] || 40;
     const threshold = THRESHOLDS[crop][season];
-    if (rainfall < threshold * 0.6) return { level: 'high',   label: 'High Drought Risk',   desc: `Rainfall (${rainfall}mm) is well below the ${threshold}mm threshold for your crop.` };
-    if (rainfall < threshold)       return { level: 'medium', label: 'Medium Drought Risk',  desc: `Rainfall (${rainfall}mm) is slightly below the ${threshold}mm threshold.` };
-    return                                  { level: 'low',   label: 'Low Drought Risk',     desc: `Rainfall (${rainfall}mm) is above the ${threshold}mm threshold. Conditions look stable.` };
+    if (rainfall < threshold * 0.6)
+      return {
+        level: "high",
+        label: "High Drought Risk",
+        desc: `Rainfall (${rainfall}mm) is well below the ${threshold}mm threshold for your crop.`,
+      };
+    if (rainfall < threshold)
+      return {
+        level: "medium",
+        label: "Medium Drought Risk",
+        desc: `Rainfall (${rainfall}mm) is slightly below the ${threshold}mm threshold.`,
+      };
+    return {
+      level: "low",
+      label: "Low Drought Risk",
+      desc: `Rainfall (${rainfall}mm) is above the ${threshold}mm threshold. Conditions look stable.`,
+    };
   }
 
   function goToWizard() {
     setWizardStep(1);
-    setTimeout(() => wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(
+      () =>
+        wizardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      50,
+    );
   }
   function goTo(step) {
     setWizardStep(step);
-    setTimeout(() => wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(
+      () =>
+        wizardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      50,
+    );
   }
 
   const handleRegister = async () => {
-    if (!wallet.connected) return notify('Connect your wallet first', 'error');
-    if (!coverage)         return notify('Enter a coverage amount', 'error');
+    if (!wallet.connected) return notify("Connect your wallet first", "error");
+    if (!coverage) return notify("Enter a coverage amount", "error");
     setLoading(true);
     try {
       const sig = await registerPolicy(wallet, {
-        coverageAmount:   solAmount * 1e9,
+        coverageAmount: solAmount * 1e9,
         triggerThreshold: finalThreshold,
-        regionId:         region,
-        policyType:       0,
-        durationDays:     parseInt(duration),
+        regionId: region,
+        policyType: 0,
+        durationDays: parseInt(duration),
       });
       notify(`Policy registered! TX: ${sig.slice(0, 8)}...`);
-      setTxStep('premium');
+      setTxStep("premium");
     } catch (e) {
-      if (e.message?.includes('already been processed')) { notify('Policy registered!'); setTxStep('premium'); }
-      else notify(e.message || 'Registration failed', 'error');
+      if (e.message?.includes("already been processed")) {
+        notify("Policy registered!");
+        setTxStep("premium");
+      } else notify(e.message || "Registration failed", "error");
     }
     setLoading(false);
   };
 
   const handlePremium = async () => {
-    if (!wallet.connected) return notify('Connect your wallet first', 'error');
+    if (!wallet.connected) return notify("Connect your wallet first", "error");
     setLoading(true);
     try {
       const premiumLamports = solAmount * 1e9 * 0.05;
       const sig = await payPremium(wallet, premiumLamports);
       notify(`Premium paid! TX: ${sig.slice(0, 8)}...`);
-      setTxStep('done');
+      setTxStep("done");
     } catch (e) {
-      if (e.message?.includes('already been processed')) { notify('Premium paid!'); setTxStep('done'); }
-      else notify(e.message || 'Payment failed', 'error');
+      if (e.message?.includes("already been processed")) {
+        notify("Premium paid!");
+        setTxStep("done");
+      } else notify(e.message || "Payment failed", "error");
     }
     setLoading(false);
   };
@@ -350,28 +434,38 @@ export default function Home({ notify, toNPR, toSOL }) {
   const risk = getRisk();
 
   return (
-    <div className="page-container" style={{ maxWidth: '100%', padding: 0 }}>
-
+    <div className="page-container" style={{ maxWidth: "100%", padding: 0 }}>
       {/* ── HERO ── */}
       <section className="home-hero">
         <div className="home-hero-inner">
           <div className="hero-left">
-            <div className="hero-badge" style={{ animationDelay: '0s' }}>
+            <div className="hero-badge" style={{ animationDelay: "0s" }}>
               <span className="live-dot" />
               Live on Solana Devnet
             </div>
-            <h1 className="hero-title" style={{ animationDelay: '0.1s' }}>
-              Your crops are<br /><em>protected.</em>
+            <h1 className="hero-title" style={{ animationDelay: "0.1s" }}>
+              Your crops are
+              <br />
+              <em>protected.</em>
             </h1>
-            <p className="hero-sub" style={{ animationDelay: '0.2s' }}>
-              Thahar brings parametric crop insurance to Nepali farmers — automated, transparent, instant.
-              No middlemen. No paperwork. Just protection when it matters.
+            <p className="hero-sub" style={{ animationDelay: "0.2s" }}>
+              Thahar brings parametric crop insurance to Nepali farmers —
+              automated, transparent, instant. No middlemen. No paperwork. Just
+              protection when it matters.
             </p>
             <div className="hero-actions">
-              <button className="cryo-btn" onClick={goToWizard} style={{ padding: '14px 28px', fontSize: 15 }}>
+              <button
+                className="cryo-btn"
+                onClick={goToWizard}
+                style={{ padding: "14px 28px", fontSize: 15 }}
+              >
                 Insure My Farm →
               </button>
-              <a href="#how-it-works" className="cryo-btn btn-outline" style={{ padding: '14px 28px', fontSize: 15 }}>
+              <a
+                href="#how-it-works"
+                className="cryo-btn btn-outline"
+                style={{ padding: "14px 28px", fontSize: 15 }}
+              >
                 How It Works
               </a>
             </div>
@@ -388,28 +482,59 @@ export default function Home({ notify, toNPR, toSOL }) {
                 </span>
               </div>
               {[
-                { region: 'Kathmandu', province: 'Bagmati Province', rain: 38, risk: 'medium', riskLabel: 'Medium Risk' },
-                { region: 'Khotang',   province: 'Koshi Province',   rain: 22, risk: 'high',   riskLabel: 'High Risk'   },
-                { region: 'Chitwan',   province: 'Bagmati Province', rain: 55, risk: 'low',    riskLabel: 'Low Risk'    },
-              ].map(row => (
+                {
+                  region: "Kathmandu",
+                  province: "Bagmati Province",
+                  rain: 38,
+                  risk: "medium",
+                  riskLabel: "Medium Risk",
+                },
+                {
+                  region: "Khotang",
+                  province: "Koshi Province",
+                  rain: 22,
+                  risk: "high",
+                  riskLabel: "High Risk",
+                },
+                {
+                  region: "Chitwan",
+                  province: "Bagmati Province",
+                  rain: 55,
+                  risk: "low",
+                  riskLabel: "Low Risk",
+                },
+              ].map((row) => (
                 <div key={row.region} className="oracle-row">
                   <div>
                     <div className="oracle-region">{row.region}</div>
                     <div className="oracle-province">{row.province}</div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: "right" }}>
                     <div>
                       <span className="oracle-rain-val">{row.rain}</span>
                       <span className="oracle-rain-unit">mm</span>
                     </div>
-                    <span className={`oracle-risk-badge ${row.risk}`}>{row.riskLabel}</span>
+                    <span className={`oracle-risk-badge ${row.risk}`}>
+                      {row.riskLabel}
+                    </span>
                   </div>
                 </div>
               ))}
               <div className="oracle-footer">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <circle cx="6" cy="6" r="5" stroke="#C4C4C4" strokeWidth="1.2"/>
-                  <path d="M6 3.5v2.5l1.5 1.5" stroke="#C4C4C4" strokeWidth="1.2" strokeLinecap="round"/>
+                  <circle
+                    cx="6"
+                    cy="6"
+                    r="5"
+                    stroke="#C4C4C4"
+                    strokeWidth="1.2"
+                  />
+                  <path
+                    d="M6 3.5v2.5l1.5 1.5"
+                    stroke="#C4C4C4"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 Open-Meteo weather data · Every 12 hours
               </div>
@@ -422,10 +547,10 @@ export default function Home({ notify, toNPR, toSOL }) {
       <div ref={addRevealRef} className="reveal stats-strip">
         <div className="stats-inner">
           {[
-            { val: '~24h',   label: 'Automatic payout after drought trigger' },
-            { val: '3',      label: 'Regions covered across Nepal'           },
-            { val: '0%',     label: 'Middlemen in the payout process'        },
-            { val: 'Solana', label: 'Sub-second finality, near-zero fees'    },
+            { val: "~24h", label: "Automatic payout after drought trigger" },
+            { val: "3", label: "Regions covered across Nepal" },
+            { val: "0%", label: "Middlemen in the payout process" },
+            { val: "Solana", label: "Sub-second finality, near-zero fees" },
           ].map((s, i) => (
             <div key={i} className="stat-item">
               <div className="stat-val">{s.val}</div>
@@ -442,9 +567,9 @@ export default function Home({ notify, toNPR, toSOL }) {
           <div className="section-title">Five steps from signup to payout.</div>
         </div>
         {/* hiwRef goes on the steps-grid wrapper so SVG covers only the cards */}
-        <div ref={hiwRef} className='steps-grid hiw-grid-wrap'>
-          {HOW_IT_WORKS.map(card => (
-            <StepCard key={card.steps} card={card} />
+        <div ref={hiwRef} className="steps-grid hiw-grid-wrap">
+          {HOW_IT_WORKS.map((card) => (
+            <StepCard key={card.step} card={card} />
           ))}
         </div>
       </section>
@@ -459,21 +584,31 @@ export default function Home({ notify, toNPR, toSOL }) {
 
           {!wallet.connected ? (
             <div className="cryo-card connect-prompt">
-              <p>Connect your Phantom wallet to register a policy on Solana devnet.</p>
+              <p>
+                Connect your Phantom wallet to register a policy on Solana
+                devnet.
+              </p>
               {isMobile && !isInPhantom ? (
-                <button className="cryo-btn" onClick={() => window.location.href = 'phantom://browse/https%3A%2F%2Fthahar.vercel.app'}>
+                <button
+                  className="cryo-btn"
+                  onClick={() =>
+                    (window.location.href =
+                      "phantom://browse/https%3A%2F%2Fthahar.vercel.app")
+                  }
+                >
                   🔗 Open in Phantom
                 </button>
               ) : (
                 <WalletMultiButton className="cryo-wallet-btn" />
               )}
             </div>
-          ) : txStep === 'done' ? (
+          ) : txStep === "done" ? (
             <div className="cryo-card done-state">
               <div className="done-icon">✅</div>
               <h3 className="done-title">Policy Active!</h3>
               <p className="done-desc">
-                Your insurance policy is live on Solana devnet. You will receive SOL directly when drought conditions are met.
+                Your insurance policy is live on Solana devnet. You will receive
+                SOL directly when drought conditions are met.
               </p>
               <a
                 href={`https://explorer.solana.com/address/${wallet.publicKey?.toBase58()}?cluster=devnet`}
@@ -484,42 +619,77 @@ export default function Home({ notify, toNPR, toSOL }) {
                 View on Explorer →
               </a>
             </div>
-          ) : txStep === 'premium' ? (
+          ) : txStep === "premium" ? (
             <div className="cryo-card" style={{ padding: 36 }}>
               <div className="wizard-section-label">Step 2 of 2</div>
-              <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--grey-900)', marginBottom: 6 }}>Pay Your Premium</div>
-              <p style={{ color: 'var(--text-muted)', fontWeight: 300, marginBottom: 28, fontSize: 14 }}>
-                Premium is 5% of your coverage amount. This activates your policy on-chain.
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 600,
+                  color: "var(--grey-900)",
+                  marginBottom: 6,
+                }}
+              >
+                Pay Your Premium
+              </div>
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontWeight: 300,
+                  marginBottom: 28,
+                  fontSize: 14,
+                }}
+              >
+                Premium is 5% of your coverage amount. This activates your
+                policy on-chain.
               </p>
               <div className="premium-box">
                 <div className="premium-label">Premium Due</div>
                 <div className="premium-amount">{premiumSOL} SOL</div>
-                <div className="premium-sub">5% of {solAmount.toFixed(4)} SOL coverage</div>
+                <div className="premium-sub">
+                  5% of {solAmount.toFixed(4)} SOL coverage
+                </div>
               </div>
-              <button className="cryo-btn full-width" onClick={handlePremium} disabled={loading} style={{ height: 52, fontSize: 15 }}>
-                {loading ? 'Processing...' : '💳 Pay Premium & Activate Policy'}
+              <button
+                className="cryo-btn full-width"
+                onClick={handlePremium}
+                disabled={loading}
+                style={{ height: 52, fontSize: 15 }}
+              >
+                {loading ? "Processing..." : "💳 Pay Premium & Activate Policy"}
               </button>
             </div>
           ) : (
             <>
               <div style={{ marginBottom: 36 }}>
                 <div className="progress-steps">
-                  {['Region', 'Crop', 'Season', 'Duration', 'Coverage', 'Review'].map((name, i) => {
-                    const n        = i + 1;
-                    const isDone   = wizardStep > n;
+                  {[
+                    "Region",
+                    "Crop",
+                    "Season",
+                    "Duration",
+                    "Coverage",
+                    "Review",
+                  ].map((name, i) => {
+                    const n = i + 1;
+                    const isDone = wizardStep > n;
                     const isActive = wizardStep === n;
                     return (
                       <div key={n} className="progress-step">
                         {i < 5 && (
-                          <div className={`progress-line${isDone ? ' done' : ''}`} />
+                          <div
+                            className={`progress-line${isDone ? " done" : ""}`}
+                          />
                         )}
                         <div
-                          className={`step-dot${isDone ? ' done' : ''}${isActive ? ' active' : ''}`}
+                          className={`step-dot${isDone ? " done" : ""}${isActive ? " active" : ""}`}
                           onClick={() => isDone && goTo(n)}
                         >
-                          {isDone ? '✓' : n}
+                          {isDone ? "✓" : n}
                         </div>
-                        <div className={`step-name${isDone || isActive ? ' active' : ''}`}>
+                        <div
+                          className={`step-name${isDone || isActive ? " active" : ""}`}
+                        >
                           {name}
                         </div>
                       </div>
@@ -530,9 +700,12 @@ export default function Home({ notify, toNPR, toSOL }) {
 
               <div className="cryo-card wizard-card">
                 {wizardStep === 1 && (
-                  <WizardStep question="Where is your farm?" hint="Select the district closest to your farmland.">
+                  <WizardStep
+                    question="Where is your farm?"
+                    hint="Select the district closest to your farmland."
+                  >
                     <div className="options-grid">
-                      {REGIONS.map(r => (
+                      {REGIONS.map((r) => (
                         <OptionCard
                           key={r}
                           selected={region === r}
@@ -543,54 +716,81 @@ export default function Home({ notify, toNPR, toSOL }) {
                         />
                       ))}
                     </div>
-                    <WizardNav onNext={() => goTo(2)} nextDisabled={!canNext[1]} showBack={false} />
+                    <WizardNav
+                      onNext={() => goTo(2)}
+                      nextDisabled={!canNext[1]}
+                      showBack={false}
+                    />
                   </WizardStep>
                 )}
 
                 {wizardStep === 2 && (
-                  <WizardStep question="What do you grow?" hint="Your crop determines the drought threshold.">
+                  <WizardStep
+                    question="What do you grow?"
+                    hint="Your crop determines the drought threshold."
+                  >
                     <div className="options-grid">
-                      {CROPS.map(c => (
+                      {CROPS.map((c) => (
                         <OptionCard
                           key={c}
                           selected={crop === c}
-                          onClick={() => { setCrop(c); setAdjustment(0); }}
+                          onClick={() => {
+                            setCrop(c);
+                            setAdjustment(0);
+                          }}
                           icon={CROP_META[c].emoji}
                           label={c}
                           sub={CROP_META[c].nepali}
                         />
                       ))}
                     </div>
-                    <WizardNav onBack={() => goTo(1)} onNext={() => goTo(3)} nextDisabled={!canNext[2]} />
+                    <WizardNav
+                      onBack={() => goTo(1)}
+                      onNext={() => goTo(3)}
+                      nextDisabled={!canNext[2]}
+                    />
                   </WizardStep>
                 )}
 
                 {wizardStep === 3 && (
-                  <WizardStep question="Which season?" hint="Coverage period aligns with your growing season.">
+                  <WizardStep
+                    question="Which season?"
+                    hint="Coverage period aligns with your growing season."
+                  >
                     <div className="options-grid">
                       {[
-                        { val: 'Monsoon', emoji: '🌧', sub: 'Jun – Sep' },
-                        { val: 'Winter',  emoji: '❄️', sub: 'Nov – Feb' },
-                        { val: 'Spring',  emoji: '🌸', sub: 'Mar – May' },
-                      ].map(s => (
+                        { val: "Monsoon", emoji: "🌧", sub: "Jun – Sep" },
+                        { val: "Winter", emoji: "❄️", sub: "Nov – Feb" },
+                        { val: "Spring", emoji: "🌸", sub: "Mar – May" },
+                      ].map((s) => (
                         <OptionCard
                           key={s.val}
                           selected={season === s.val}
-                          onClick={() => { setSeason(s.val); setAdjustment(0); }}
+                          onClick={() => {
+                            setSeason(s.val);
+                            setAdjustment(0);
+                          }}
                           icon={s.emoji}
                           label={s.val}
                           sub={s.sub}
                         />
                       ))}
                     </div>
-                    <WizardNav onBack={() => goTo(2)} onNext={() => goTo(4)} nextDisabled={!canNext[3]} />
+                    <WizardNav
+                      onBack={() => goTo(2)}
+                      onNext={() => goTo(4)}
+                      nextDisabled={!canNext[3]}
+                    />
                   </WizardStep>
                 )}
 
                 {wizardStep === 4 && (
-                  <WizardStep question="How long do you need coverage?" hint="Longer coverage protects you through the full season.">
+                  <WizardStep
+                    question="How long do you need coverage?"
+                    hint="Longer coverage protects you through the full season."
+                  >
                     <div className="options-grid">
-                      {DURATIONS.map(d => (
+                      {DURATIONS.map((d) => (
                         <OptionCard
                           key={d.value}
                           selected={duration === d.value}
@@ -600,12 +800,19 @@ export default function Home({ notify, toNPR, toSOL }) {
                         />
                       ))}
                     </div>
-                    <WizardNav onBack={() => goTo(3)} onNext={() => goTo(5)} nextDisabled={!canNext[4]} />
+                    <WizardNav
+                      onBack={() => goTo(3)}
+                      onNext={() => goTo(5)}
+                      nextDisabled={!canNext[4]}
+                    />
                   </WizardStep>
                 )}
 
                 {wizardStep === 5 && (
-                  <WizardStep question="How much coverage?" hint="Enter the value of your crop in Nepali Rupees.">
+                  <WizardStep
+                    question="How much coverage?"
+                    hint="Enter the value of your crop in Nepali Rupees."
+                  >
                     <div className="coverage-wrap">
                       <div className="input-group">
                         <div className="input-prefix">Rs.</div>
@@ -615,39 +822,73 @@ export default function Home({ notify, toNPR, toSOL }) {
                           placeholder="50,000"
                           min="1000"
                           value={coverage}
-                          onChange={e => setCoverage(e.target.value)}
+                          onChange={(e) => setCoverage(e.target.value)}
                         />
-                        <div className={`sol-badge${coverage && parseFloat(coverage) >= 1000 ? ' visible' : ''}`}>
+                        <div
+                          className={`sol-badge${coverage && parseFloat(coverage) >= 1000 ? " visible" : ""}`}
+                        >
                           ≈ {solAmount.toFixed(4)} SOL
                         </div>
                       </div>
-                      <div className="coverage-note">Minimum Rs. 1,000 · Converts to SOL at current rate</div>
+                      <div className="coverage-note">
+                        Minimum Rs. 1,000 · Converts to SOL at current rate
+                      </div>
                       {crop && season && (
                         <div className="threshold-box">
-                          <div className="threshold-box-label">Rainfall Trigger Threshold</div>
-                          <div className="threshold-controls">
-                            <button className="cryo-btn btn-outline adj-btn" onClick={() => setAdjustment(a => Math.max(a - 1, -5))} type="button">−</button>
-                            <span className="threshold-val">{finalThreshold} mm</span>
-                            <button className="cryo-btn btn-outline adj-btn" onClick={() => setAdjustment(a => Math.min(a + 1, 5))} type="button">+</button>
+                          <div className="threshold-box-label">
+                            Rainfall Trigger Threshold
                           </div>
-                          <div className={`threshold-note${Math.abs(adjustment) >= 3 ? ' warn' : ''}`}>
+                          <div className="threshold-controls">
+                            <button
+                              className="cryo-btn btn-outline adj-btn"
+                              onClick={() =>
+                                setAdjustment((a) => Math.max(a - 1, -5))
+                              }
+                              type="button"
+                            >
+                              −
+                            </button>
+                            <span className="threshold-val">
+                              {finalThreshold} mm
+                            </span>
+                            <button
+                              className="cryo-btn btn-outline adj-btn"
+                              onClick={() =>
+                                setAdjustment((a) => Math.min(a + 1, 5))
+                              }
+                              type="button"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div
+                            className={`threshold-note${Math.abs(adjustment) >= 3 ? " warn" : ""}`}
+                          >
                             {adjustment === 0
                               ? `Recommended: ${baseThreshold}mm for ${crop} in ${season}`
                               : Math.abs(adjustment) === 5
-                                ? '⚠️ Maximum adjustment reached'
+                                ? "⚠️ Maximum adjustment reached"
                                 : Math.abs(adjustment) >= 3
-                                  ? `⚠️ ${adjustment > 0 ? '+' : ''}${adjustment}mm from recommended — payout conditions may vary`
-                                  : `Adjusted ${adjustment > 0 ? '+' : ''}${adjustment}mm from recommended`}
+                                  ? `⚠️ ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended — payout conditions may vary`
+                                  : `Adjusted ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended`}
                           </div>
                         </div>
                       )}
                     </div>
-                    <WizardNav onBack={() => goTo(4)} onNext={() => goTo(6)} nextDisabled={!canNext[5]} nextLabel="Review Policy →" />
+                    <WizardNav
+                      onBack={() => goTo(4)}
+                      onNext={() => goTo(6)}
+                      nextDisabled={!canNext[5]}
+                      nextLabel="Review Policy →"
+                    />
                   </WizardStep>
                 )}
 
                 {wizardStep === 6 && (
-                  <WizardStep question="Review your policy" hint="Confirm your details before registering on Solana.">
+                  <WizardStep
+                    question="Review your policy"
+                    hint="Confirm your details before registering on Solana."
+                  >
                     <div className={`risk-banner ${risk.level}`}>
                       <div className="risk-dot" />
                       <div className="risk-text">
@@ -657,25 +898,56 @@ export default function Home({ notify, toNPR, toSOL }) {
                     </div>
                     <div className="summary-grid">
                       {[
-                        { key: 'Region',      val: region   ? region.charAt(0).toUpperCase() + region.slice(1) : '—' },
-                        { key: 'Crop',        val: crop     || '—' },
-                        { key: 'Season',      val: season   || '—' },
-                        { key: 'Duration',    val: duration ? `${duration} days` : '—' },
-                        { key: 'Coverage',    val: coverage ? `Rs. ${parseFloat(coverage).toLocaleString()} ≈ ${solAmount.toFixed(4)} SOL` : '—', green: true },
-                        { key: 'Policy Type', val: 'Drought' },
-                        { key: 'Threshold',   val: `${finalThreshold} mm rainfall` },
-                        { key: 'Premium',     val: `${premiumSOL} SOL (5%)`, green: true },
-                      ].map(row => (
+                        {
+                          key: "Region",
+                          val: region
+                            ? region.charAt(0).toUpperCase() + region.slice(1)
+                            : "—",
+                        },
+                        { key: "Crop", val: crop || "—" },
+                        { key: "Season", val: season || "—" },
+                        {
+                          key: "Duration",
+                          val: duration ? `${duration} days` : "—",
+                        },
+                        {
+                          key: "Coverage",
+                          val: coverage
+                            ? `Rs. ${parseFloat(coverage).toLocaleString()} ≈ ${solAmount.toFixed(4)} SOL`
+                            : "—",
+                          green: true,
+                        },
+                        { key: "Policy Type", val: "Drought" },
+                        {
+                          key: "Threshold",
+                          val: `${finalThreshold} mm rainfall`,
+                        },
+                        {
+                          key: "Premium",
+                          val: `${premiumSOL} SOL (5%)`,
+                          green: true,
+                        },
+                      ].map((row) => (
                         <div className="summary-row" key={row.key}>
                           <div className="summary-key">{row.key}</div>
-                          <div className={`summary-val${row.green ? ' green' : ''}`}>{row.val}</div>
+                          <div
+                            className={`summary-val${row.green ? " green" : ""}`}
+                          >
+                            {row.val}
+                          </div>
                         </div>
                       ))}
                     </div>
                     <div className="wizard-nav">
-                      <button className="btn-back" onClick={() => goTo(5)}>← Back</button>
-                      <button className="btn-register" onClick={handleRegister} disabled={loading}>
-                        {loading ? 'Registering...' : 'Register Policy'}
+                      <button className="btn-back" onClick={() => goTo(5)}>
+                        ← Back
+                      </button>
+                      <button
+                        className="btn-register"
+                        onClick={handleRegister}
+                        disabled={loading}
+                      >
+                        {loading ? "Registering..." : "Register Policy"}
                       </button>
                     </div>
                   </WizardStep>
@@ -691,13 +963,15 @@ export default function Home({ notify, toNPR, toSOL }) {
         <div>
           <div className="cta-eyebrow">Built on Solana</div>
           <div className="cta-title">Protect your harvest today.</div>
-          <div className="cta-sub">Takes 60 seconds. Connect your Phantom wallet and register your first policy.</div>
+          <div className="cta-sub">
+            Takes 60 seconds. Connect your Phantom wallet and register your
+            first policy.
+          </div>
         </div>
         <button className="cryo-btn cta-btn" onClick={goToWizard}>
           Register Policy →
         </button>
       </div>
-
     </div>
   );
 }
@@ -712,27 +986,41 @@ function StepCard({ card }) {
     <div
       className="cryo-card step-card-colored"
       style={{
-        background:  card.bg,
+        background: card.bg,
         borderColor: card.border,
-        color:       card.accent,
-        position:    'relative',
-        zIndex:      2,
+        color: card.accent,
+        position: "relative",
+        zIndex: 2,
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "";
+      }}
     >
-      <div className="step-card-num"  style={{ color: card.accent }}>{card.step}</div>
-      <div className="step-card-icon" style={{ background: card.iconBg }}>{card.emoji}</div>
+      <div className="step-card-num" style={{ color: card.accent }}>
+        {card.step}
+      </div>
+      <div className="step-card-icon" style={{ background: card.iconBg }}>
+        {card.emoji}
+      </div>
       <h3 className="step-card-title">{card.title}</h3>
-      <p  className="step-card-desc">{card.desc}</p>
+      <p className="step-card-desc">{card.desc}</p>
       {npOn && (
-        <p className="step-card-np visible" style={{ borderTopColor: card.border }}>
+        <p
+          className="step-card-np visible"
+          style={{ borderTopColor: card.border }}
+        >
           {card.np}
         </p>
       )}
       <div className="step-card-footer">
-        <button className="step-card-translate" onClick={() => setNpOn(o => !o)}>
-          {npOn ? '🇬🇧 EN' : '🇳🇵 NP'}
+        <button
+          className="step-card-translate"
+          onClick={() => setNpOn((o) => !o)}
+        >
+          {npOn ? "🇬🇧 EN" : "🇳🇵 NP"}
         </button>
       </div>
     </div>
@@ -754,7 +1042,10 @@ function WizardStep({ question, hint, children }) {
 
 function OptionCard({ selected, onClick, icon, label, sub }) {
   return (
-    <div className={`option-card${selected ? ' selected' : ''}`} onClick={onClick}>
+    <div
+      className={`option-card${selected ? " selected" : ""}`}
+      onClick={onClick}
+    >
       {icon && <div className="option-icon">{icon}</div>}
       <div className="option-label">{label}</div>
       {sub && <div className="option-sub">{sub}</div>}
@@ -762,11 +1053,23 @@ function OptionCard({ selected, onClick, icon, label, sub }) {
   );
 }
 
-function WizardNav({ onBack, onNext, nextDisabled, showBack = true, nextLabel = 'Continue →' }) {
+function WizardNav({
+  onBack,
+  onNext,
+  nextDisabled,
+  showBack = true,
+  nextLabel = "Continue →",
+}) {
   return (
     <div className="wizard-nav">
-      {showBack && <button className="btn-back" onClick={onBack}>← Back</button>}
-      <button className="btn-next" onClick={onNext} disabled={nextDisabled}>{nextLabel}</button>
+      {showBack && (
+        <button className="btn-back" onClick={onBack}>
+          ← Back
+        </button>
+      )}
+      <button className="btn-next" onClick={onNext} disabled={nextDisabled}>
+        {nextLabel}
+      </button>
     </div>
   );
 }

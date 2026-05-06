@@ -21,3 +21,5 @@ backend/package-lock.json
 backend/thahar.json
 backend/farmer-keypair.json
 crank-keypair.json
+.vercel
+.env*.local

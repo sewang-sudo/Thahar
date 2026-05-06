@@ -1,15 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { fetchPolicy, triggerPayout, closePolicy, expirePolicy } from '../utils/thahar';
+import React, { useEffect, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  fetchPolicy,
+  triggerPayout,
+  closePolicy,
+  expirePolicy,
+} from "../utils/thahar";
 
-const STATUS_LABELS = { 0: 'Active', 1: 'Paid Out', 2: 'Expired' };
-const STATUS_COLORS = { 0: '#00ff88', 1: '#7b61ff', 2: '#888' };
-const TYPE_LABELS   = { 0: 'Drought', 1: 'Flood', 2: 'Both' };
+const STATUS_LABELS = { 0: "Active", 1: "Paid Out", 2: "Expired" };
+const STATUS_COLORS = { 0: "#00ff88", 1: "#7b61ff", 2: "#888" };
+const TYPE_LABELS = { 0: "Drought", 1: "Flood", 2: "Both" };
 
-const enumKey     = (obj) => obj && typeof obj === 'object' ? Object.keys(obj)[0] : obj;
-const statusIndex = (s) => ({ active: 0, paidOut: 1, expired: 2 }[enumKey(s)] ?? s);
-const typeIndex   = (t) => ({ drought: 0, flood: 1, both: 2 }[enumKey(t)] ?? t);
+const enumKey = (obj) =>
+  obj && typeof obj === "object" ? Object.keys(obj)[0] : obj;
+const statusIndex = (s) =>
+  ({ active: 0, paidOut: 1, expired: 2 })[enumKey(s)] ?? s;
+const typeIndex = (t) => ({ drought: 0, flood: 1, both: 2 })[enumKey(t)] ?? t;
 
 export default function MyPolicies({ notify, toNPR }) {
   const wallet = useWallet();
@@ -21,7 +28,9 @@ export default function MyPolicies({ notify, toNPR }) {
     if (!wallet.connected) return;
     setFetching(true);
     fetchPolicy(wallet)
-      .then(p => { setPolicy(p); })
+      .then((p) => {
+        setPolicy(p);
+      })
       .catch(() => setPolicy(null))
       .finally(() => setFetching(false));
   }, [wallet.connected]);
@@ -32,9 +41,13 @@ export default function MyPolicies({ notify, toNPR }) {
     try {
       const sig = await triggerPayout(wallet, policy.regionId);
       notify(`Payout triggered! TX: ${sig.slice(0, 8)}...`);
-      setPolicy(p => ({ ...p, status: 1 }));
+      setPolicy((p) => ({ ...p, status: 1 }));
     } catch (e) {
-      if (e.message?.includes("already been processed")) { notify("Payout triggered!"); } else { notify(e.message || "Trigger failed", "error"); }
+      if (e.message?.includes("already been processed")) {
+        notify("Payout triggered!");
+      } else {
+        notify(e.message || "Trigger failed", "error");
+      }
     }
     setLoading(false);
   };
@@ -47,7 +60,11 @@ export default function MyPolicies({ notify, toNPR }) {
       notify(`Policy closed! Rent returned. TX: ${sig.slice(0, 8)}...`);
       setPolicy(null);
     } catch (e) {
-      if (e.message?.includes("already been processed")) { notify("Policy closed!"); } else { notify(e.message || "Close failed", "error"); }
+      if (e.message?.includes("already been processed")) {
+        notify("Policy closed!");
+      } else {
+        notify(e.message || "Close failed", "error");
+      }
     }
     setLoading(false);
   };
@@ -60,7 +77,12 @@ export default function MyPolicies({ notify, toNPR }) {
       notify(`Policy expired! 50% premium returned. TX: ${sig.slice(0, 8)}...`);
       setPolicy(null);
     } catch (e) {
-      if (e.message?.includes("already been processed")) { notify("Policy expired!"); setPolicy(null); } else { notify(e.message || "Expire failed", "error"); }
+      if (e.message?.includes("already been processed")) {
+        notify("Policy expired!");
+        setPolicy(null);
+      } else {
+        notify(e.message || "Expire failed", "error");
+      }
     }
     setLoading(false);
   };
@@ -84,9 +106,11 @@ export default function MyPolicies({ notify, toNPR }) {
 
       {!fetching && !policy && (
         <div className="cryo-card empty-state">
-          <div style={{ fontSize: '3rem' }}>🌾</div>
+          <div style={{ fontSize: "3rem" }}>🌾</div>
           <p>No policy found for this wallet.</p>
-          <a href="/" className="cryo-btn">Register a Policy</a>
+          <a href="/" className="cryo-btn">
+            Register a Policy
+          </a>
         </div>
       )}
 
@@ -94,15 +118,17 @@ export default function MyPolicies({ notify, toNPR }) {
         <div className="cryo-card policy-detail">
           <div className="policy-header">
             <div>
-              <h3 className="policy-type">{TYPE_LABELS[typeIndex(policy.policyType)]} Insurance</h3>
+              <h3 className="policy-type">
+                {TYPE_LABELS[typeIndex(policy.policyType)]} Insurance
+              </h3>
               <span className="policy-region">📍 {policy.regionId}</span>
             </div>
             <span
               className="status-badge"
               style={{
-                background: STATUS_COLORS[statusIndex(policy.status)] + '22',
+                background: STATUS_COLORS[statusIndex(policy.status)] + "22",
                 color: STATUS_COLORS[statusIndex(policy.status)],
-                border: `1px solid ${STATUS_COLORS[statusIndex(policy.status)]}`
+                border: `1px solid ${STATUS_COLORS[statusIndex(policy.status)]}`,
               }}
             >
               {STATUS_LABELS[statusIndex(policy.status)]}
@@ -114,36 +140,54 @@ export default function MyPolicies({ notify, toNPR }) {
               <span className="stat-label">Coverage</span>
               <span className="stat-value">
                 {(policy.coverageAmount?.toNumber?.() / 1e9).toFixed(2)} SOL
-                {toNPR && <span style={{color:'#888', fontSize:'12px', marginLeft:'6px'}}>{toNPR(policy.coverageAmount?.toNumber?.() / 1e9)}</span>}
+                {toNPR && (
+                  <span
+                    style={{
+                      color: "#888",
+                      fontSize: "12px",
+                      marginLeft: "6px",
+                    }}
+                  >
+                    {toNPR(policy.coverageAmount?.toNumber?.() / 1e9)}
+                  </span>
+                )}
               </span>
             </div>
             <div className="policy-stat">
               <span className="stat-label">Trigger Threshold</span>
-              <span className="stat-value">{policy.triggerThreshold?.toString()} mm</span>
+              <span className="stat-value">
+                {policy.triggerThreshold?.toString()} mm
+              </span>
             </div>
             <div className="policy-stat">
               <span className="stat-label">Premium Paid</span>
-              <span className="stat-value">{policy.premiumPaid ? '✅ Yes' : '❌ No'}</span>
+              <span className="stat-value">
+                {policy.premiumPaid ? "✅ Yes" : "❌ No"}
+              </span>
             </div>
             <div className="policy-stat">
               <span className="stat-label">Farmer</span>
-              <span className="stat-value mono">{policy.farmer?.toBase58?.()?.slice(0, 8)}...</span>
+              <span className="stat-value mono">
+                {policy.farmer?.toBase58?.()?.slice(0, 8)}...
+              </span>
             </div>
             <div className="policy-stat">
               <span className="stat-label">Duration</span>
-              <span className="stat-value">{policy.durationDays?.toString()} days</span>
+              <span className="stat-value">
+                {policy.durationDays?.toString()} days
+              </span>
             </div>
             <div className="policy-stat">
               <span className="stat-label">Expires</span>
               <span className="stat-value">
                 {(() => {
                   const exp = policy.expiresAt?.toNumber?.();
-                  if (!exp) return 'N/A';
+                  if (!exp) return "N/A";
                   const now = Math.floor(Date.now() / 1000);
                   const daysLeft = Math.floor((exp - now) / 86400);
-                  if (daysLeft < 0) return 'Expired';
-                  if (daysLeft === 0) return 'Expires today';
-                  return daysLeft + ' days left';
+                  if (daysLeft < 0) return "Expired";
+                  if (daysLeft === 0) return "Expires today";
+                  return daysLeft + " days left";
                 })()}
               </span>
             </div>
@@ -152,94 +196,139 @@ export default function MyPolicies({ notify, toNPR }) {
               <span className="stat-value">
                 {(() => {
                   const created = policy.createdAt?.toNumber?.();
-                  if (!created) return 'N/A';
+                  if (!created) return "N/A";
                   const now = Math.floor(Date.now() / 1000);
                   const daysActive = Math.floor((now - created) / 86400);
-                  if (daysActive >= 7) return 'Yes';
-                  return (7 - daysActive) + ' days remaining';
+                  if (daysActive >= 7) return "Yes";
+                  return 7 - daysActive + " days remaining";
                 })()}
               </span>
             </div>
           </div>
 
-          {statusIndex(policy.status) === 0 && policy.premiumPaid && (() => {
-            const now = Math.floor(Date.now() / 1000);
-            const daysActive = Math.floor((now - policy.createdAt?.toNumber?.()) / 86400);
-            const expiresAt = policy.expiresAt?.toNumber?.();
-            const daysRemaining = Math.floor((expiresAt - now) / 86400);
-            const isExpired = now >= expiresAt;
-            const isFinalMonth = daysRemaining <= 30 && !isExpired && policy.durationDays > 30;
-            const isLockPeriod = daysActive <= 30;
+          {statusIndex(policy.status) === 0 &&
+            policy.premiumPaid &&
+            (() => {
+              const now = Math.floor(Date.now() / 1000);
+              const daysActive = Math.floor(
+                (now - policy.createdAt?.toNumber?.()) / 86400,
+              );
+              const expiresAt = policy.expiresAt?.toNumber?.();
+              const daysRemaining = Math.floor((expiresAt - now) / 86400);
+              const isExpired = now >= expiresAt;
+              const isFinalMonth =
+                daysRemaining <= 30 && !isExpired && policy.durationDays > 30;
+              const isLockPeriod = daysActive <= 30;
 
-            let cancelLabel = '';
-            if (isExpired) cancelLabel = 'Collect 50% Back & Close';
-            else if (isFinalMonth) cancelLabel = 'Locked - Final Month (Cannot Cancel)';
-            else if (isLockPeriod) cancelLabel = 'Cancel (Lock Period - 0% Refund)';
-            else cancelLabel = 'Cancel Policy (70% Premium Back)';
+              let cancelLabel = "";
+              if (isExpired) cancelLabel = "Collect 50% Back & Close";
+              else if (isFinalMonth)
+                cancelLabel = "Locked - Final Month (Cannot Cancel)";
+              else if (isLockPeriod)
+                cancelLabel = "Cancel (Lock Period - 0% Refund)";
+              else cancelLabel = "Cancel Policy (70% Premium Back)";
 
-            return (
-              <>
-                <button className="cryo-btn full-width" onClick={handleTrigger} disabled={loading}>
-                  {loading ? 'Processing...' : 'Trigger Payout (if conditions met)'}
-                </button>
-                <button
-                  className="cryo-btn full-width"
-                  onClick={handleClose}
-                  disabled={loading || isFinalMonth}
-                  style={{ background: '#ff444422', color: '#ff4444', border: '1px solid #ff4444', marginTop: '0.5rem' }}
-                >
-                  {loading ? 'Processing...' : cancelLabel}
-                </button>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '0.5rem', textAlign: 'center' }}>
-                  {isExpired ? 'Policy expired - claim your 50% back' :
-                   isFinalMonth ? `${daysRemaining} days left - locked until expiry` :
-                   isLockPeriod ? `${30 - daysActive} days until lock period ends` :
-                   `${daysRemaining} days remaining - cancel for 70% back`}
-                </div>
-              </>
-            );
-          })()}
+              return (
+                <>
+                  <button
+                    className="cryo-btn full-width"
+                    onClick={handleTrigger}
+                    disabled={loading}
+                  >
+                    {loading
+                      ? "Processing..."
+                      : "Trigger Payout (if conditions met)"}
+                  </button>
+                  <button
+                    className="cryo-btn full-width"
+                    onClick={handleClose}
+                    disabled={loading || isFinalMonth}
+                    style={{
+                      background: "#ff444422",
+                      color: "#ff4444",
+                      border: "1px solid #ff4444",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    {loading ? "Processing..." : cancelLabel}
+                  </button>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#888",
+                      marginTop: "0.5rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    {isExpired
+                      ? "Policy expired - claim your 50% back"
+                      : isFinalMonth
+                        ? `${daysRemaining} days left - locked until expiry`
+                        : isLockPeriod
+                          ? `${30 - daysActive} days until lock period ends`
+                          : `${daysRemaining} days remaining - cancel for 70% back`}
+                  </div>
+                </>
+              );
+            })()}
           {statusIndex(policy.status) === 0 && !policy.premiumPaid && (
             <button
               className="cryo-btn full-width"
               onClick={handleClose}
               disabled={loading}
-              style={{ background: '#ff444422', color: '#ff4444', border: '1px solid #ff4444' }}
+              style={{
+                background: "#ff444422",
+                color: "#ff4444",
+                border: "1px solid #ff4444",
+              }}
             >
-              {loading ? 'Processing...' : 'Cancel Policy & Reclaim SOL'}
+              {loading ? "Processing..." : "Cancel Policy & Reclaim SOL"}
             </button>
           )}
 
           {statusIndex(policy.status) === 1 && (
-  <div className="payout-notice">
-    ✅ Payout has been sent to your wallet.
-    <button
-      className="cryo-btn full-width"
-      onClick={handleClose}
-      disabled={loading}
-      style={{ background: '#ff444422', color: '#ff4444', border: '1px solid #ff4444', marginTop: '1rem' }}
-    >
-      {loading ? 'Processing...' : '🗑️ Close Policy & Reclaim Rent'}
-    </button>
-  </div>
-)}
-
-          {statusIndex(policy.status) === 0 && (() => {
-            const now = Math.floor(Date.now() / 1000);
-            const expiresAt = policy.expiresAt?.toNumber?.();
-            const isExpired = now >= expiresAt;
-            if (!isExpired) return null;
-            return (
+            <div className="payout-notice">
+              ✅ Payout has been sent to your wallet.
               <button
                 className="cryo-btn full-width"
-                onClick={handleExpire}
+                onClick={handleClose}
                 disabled={loading}
-                style={{ background: '#7b61ff22', color: '#7b61ff', border: '1px solid #7b61ff', marginTop: '0.5rem' }}
+                style={{
+                  background: "#ff444422",
+                  color: "#ff4444",
+                  border: "1px solid #ff4444",
+                  marginTop: "1rem",
+                }}
               >
-                {loading ? 'Processing...' : 'Claim 50% Back - Policy Expired'}
+                {loading ? "Processing..." : "🗑️ Close Policy & Reclaim Rent"}
               </button>
-            );
-          })()}
+            </div>
+          )}
+
+          {statusIndex(policy.status) === 0 &&
+            (() => {
+              const now = Math.floor(Date.now() / 1000);
+              const expiresAt = policy.expiresAt?.toNumber?.();
+              const isExpired = now >= expiresAt;
+              if (!isExpired) return null;
+              return (
+                <button
+                  className="cryo-btn full-width"
+                  onClick={handleExpire}
+                  disabled={loading}
+                  style={{
+                    background: "#7b61ff22",
+                    color: "#7b61ff",
+                    border: "1px solid #7b61ff",
+                    marginTop: "0.5rem",
+                  }}
+                >
+                  {loading
+                    ? "Processing..."
+                    : "Claim 50% Back - Policy Expired"}
+                </button>
+              );
+            })()}
           <a
             href={`https://explorer.solana.com/address/${wallet.publicKey?.toBase58()}?cluster=devnet`}
             target="_blank"
