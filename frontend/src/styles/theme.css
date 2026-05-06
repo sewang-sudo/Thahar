@@ -1037,7 +1037,7 @@ button.cryo-wallet-btn:hover {
 }
 
 /* ── Mobile ────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .cryo-nav { padding: 0 1rem; }
 
   .nav-links {
@@ -1059,12 +1059,30 @@ button.cryo-wallet-btn:hover {
   .page-container  { padding: 1.5rem 1rem 4rem; }
   .home-hero       { padding: 80px 16px 48px; }
   .home-hero-inner { grid-template-columns: 1fr; gap: 32px; }
-  .hero-oracle-wrap { display: none; } /* hide oracle card on mobile */
+  .hero-oracle-wrap { display: none; }
   .stats-inner     { grid-template-columns: 1fr 1fr; }
   .stat-item:first-child { border-radius: 12px 12px 0 0; }
   .stat-item:last-child  { border-radius: 0 0 12px 12px; }
   .hiw-section     { padding: 48px 16px; }
-  .steps-grid      { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Golden 4px gap — must match SVG path connector spacing */
+  .steps-grid { grid-template-columns: 1fr; gap: 4px; }
+
+  /* Snake card animation */
+  .step-card-colored {
+    transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1),
+                border-color 0.4s ease,
+                box-shadow 0.4s ease;
+    will-change: transform;
+  }
+
+  .step-card-colored.active {
+    transform: translateX(6px) scale(1.01);
+    z-index: 3;
+  }
+
+  .step-card-colored:hover { transform: none; }
+
   .cta-section     { flex-direction: column; padding: 40px 24px; text-align: center; }
 
   .form-grid      { grid-template-columns: 1fr; }
@@ -1079,7 +1097,4 @@ button.cryo-wallet-btn:hover {
   .info-value    { font-size: 0.78rem; }
   .toast         { right: 1rem; left: 1rem; max-width: none; }
 }
-
-@media (max-width: 480px) {
-  .steps-grid { grid-template-columns: 1fr; }
-}
+  

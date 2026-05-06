@@ -57,17 +57,228 @@ export default function Home({ notify, toNPR, toSOL }) {
 
   const wizardRef  = useRef(null);
   const revealRefs = useRef([]);
+  const hiwRef     = useRef(null);
 
+  // ── Scroll reveal ──────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      }),
       { threshold: 0.1 }
     );
     revealRefs.current.forEach(el => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
-  const addRevealRef = el => { if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el); };
+  // ── Mobile-only snake animation ────────────────────────────────
+  // Constraint 1: Only runs when viewport width < 1024px.
+  // Constraint 2: Exact path math per spec (Arc corners + Cubic Bezier connectors).
+  // Constraint 3: useRef for pathEl; coords via getBoundingClientRect() delta.
+  // Constraint 4: Cards and HOW_IT_WORKS array are untouched.
+  useEffect(() => {
+    // ── Gate: desktop is untouched ──────────────────────────────
+    if (window.innerWidth >= 1024) return;
+
+    const container = hiwRef.current;
+    if (!container) return;
+
+    const SNAKE_SIZE = 110;
+    const r          = 14; // corner radius per constraint 2
+
+    // Constraint 3: useRef for the live path element
+    const pathRef = { current: null };
+    let   svgEl        = null;
+    let   totalLength  = 0;
+
+    // ── Build / rebuild the SVG and path ───────────────────────
+    function drawPath() {
+      // Tear down previous SVG if it exists
+      if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
+      pathRef.current = null;
+      totalLength     = 0;
+
+      // Constraint 3: SVG is absolute at top:0 left:0 inside the
+      //               relative-positioned container (hiw-grid-wrap).
+      svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgEl.setAttribute('aria-hidden', 'true');
+      svgEl.style.cssText = [
+        'position:absolute',
+        'top:0',
+        'left:0',
+        'width:100%',
+        'height:100%',
+        'pointer-events:none',
+        'z-index:10',
+        'overflow:visible',
+      ].join(';');
+
+      // Insert before cards so it renders behind them (z-index handles layering)
+      container.style.position = 'relative';
+      container.insertBefore(svgEl, container.firstChild);
+
+      const cards = Array.from(container.querySelectorAll('.step-card-colored'));
+      if (!cards.length) return;
+
+      // Constraint 3: All coordinates = card.getBoundingClientRect()
+      //               MINUS container.getBoundingClientRect() → zero-offset alignment.
+      const cRect = container.getBoundingClientRect();
+
+      let d = '';
+
+      cards.forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+
+        // Container-local coords
+        const x = rect.left   - cRect.left;
+        const y = rect.top    - cRect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        const entryX = x + r;
+
+        // Constraint 2: Exact path commands
+        if (i === 0) d += `M ${entryX} ${y} `;
+        else         d += `L ${entryX} ${y} `;
+
+        d += `L ${x + w - r} ${y} `;                          // top edge
+        d += `A ${r} ${r} 0 0 1 ${x + w} ${y + r} `;         // top-right corner
+        d += `L ${x + w} ${y + h - r} `;                      // right edge
+        d += `A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} `;     // bottom-right corner
+        d += `L ${entryX} ${y + h} `;                         // bottom edge
+
+        // Constraint 2: Cubic Bezier connector to next card
+        if (i < cards.length - 1) {
+          const nRect  = cards[i + 1].getBoundingClientRect();
+          const nextY  = nRect.top - cRect.top;
+          d += `C ${x - 2} ${y + h}, ${x - 2} ${nextY}, ${entryX} ${nextY} `;
+        }
+      });
+
+      // Build path, append to SVG (must be in DOM before getTotalLength())
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      el.setAttribute('d', d);
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', HOW_IT_WORKS[0].accent);
+      el.setAttribute('stroke-width', '4');
+      el.setAttribute('stroke-linecap', 'round');
+      el.setAttribute('stroke-linejoin', 'round');
+      svgEl.appendChild(el); // ← must be in DOM first
+
+      // Now getTotalLength() is accurate
+      totalLength = el.getTotalLength();
+
+      // Constraint 3 / Snake Dash Logic:
+      //   strokeDasharray  = "110 totalLength"
+      //   strokeDashoffset = 110  (fully hidden at t=0)
+      el.style.strokeDasharray  = `${SNAKE_SIZE} ${totalLength}`;
+      el.style.strokeDashoffset = `${SNAKE_SIZE}`;
+
+      pathRef.current = el;
+    }
+
+    // ── Drive the snake forward ─────────────────────────────────
+    function moveSnake(progress) {
+      const el = pathRef.current;
+      if (!el || !totalLength) return;
+
+      const p = Math.min(Math.max(progress, 0), 1);
+
+      // Constraint 3: strokeDashoffset = 110 - (p * (totalLength + 110))
+      el.style.strokeDashoffset = SNAKE_SIZE - p * (totalLength + SNAKE_SIZE);
+
+      // Constraint 3: head position via getPointAtLength
+      const headDist = Math.min(p * totalLength, totalLength - 1);
+      const head     = el.getPointAtLength(headDist);
+      // head.x / head.y are already in SVG/container-local space ✓
+
+      // Constraint 3: Active-state detection — compare head.y (container-local)
+      //               against each card's container-local top/bottom.
+      const cRect = container.getBoundingClientRect();
+      const cards = Array.from(container.querySelectorAll('.step-card-colored'));
+
+      cards.forEach((card, i) => {
+        const rect  = card.getBoundingClientRect();
+        const cardTop    = rect.top    - cRect.top;
+        const cardBottom = rect.bottom - cRect.top;
+
+        if (head.y >= cardTop - 2 && head.y <= cardBottom + 2) {
+          card.classList.add('active');
+          card.style.boxShadow = `0 12px 24px ${HOW_IT_WORKS[i].accent}33`;
+          el.setAttribute('stroke', HOW_IT_WORKS[i].accent);
+        } else {
+          card.classList.remove('active');
+          card.style.boxShadow = '';
+        }
+      });
+    }
+
+    // ── Scroll → progress mapping ───────────────────────────────
+    function handleScroll() {
+      if (!pathRef.current || !totalLength) return;
+      const rect       = container.getBoundingClientRect();
+      const winH       = window.innerHeight;
+      const scrollable = rect.height - winH;
+      let   progress;
+
+      if (scrollable <= 0) {
+        // Section shorter than viewport: drive by how far we've entered it
+        progress = Math.min(Math.max((winH - rect.bottom) / winH + 0.5, 0), 1);
+      } else {
+        // Section taller than viewport: drive by how far we've scrolled through it
+        progress = Math.min(Math.max(-rect.top / scrollable, 0), 1);
+      }
+
+      moveSnake(progress);
+    }
+
+    // ── Combined resize handler (rebuild path then re-sync position) ──
+    function handleResize() {
+      // Re-gate: if user resizes to desktop, tear everything down
+      if (window.innerWidth >= 1024) {
+        if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
+        pathRef.current = null;
+        totalLength     = 0;
+        container.querySelectorAll('.step-card-colored').forEach(c => {
+          c.classList.remove('active');
+          c.style.boxShadow = '';
+        });
+        return;
+      }
+      drawPath();
+      handleScroll();
+    }
+
+    // ── Init: give browser one paint tick so card rects are stable ──
+    const timer = setTimeout(() => {
+      drawPath();
+      handleScroll();
+    }, 800);
+
+    window.addEventListener('scroll', handleScroll,  { passive: true });
+    window.addEventListener('resize', handleResize,  { passive: true });
+
+    // ── Cleanup ─────────────────────────────────────────────────
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
+      if (container) {
+        container.querySelectorAll('.step-card-colored').forEach(card => {
+          card.classList.remove('active');
+          card.style.boxShadow = '';
+        });
+      }
+    };
+  }, []);
+
+  const addRevealRef = el => {
+    if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
+  };
 
   const baseThreshold  = crop && season ? THRESHOLDS[crop][season] : 40;
   const finalThreshold = baseThreshold + adjustment;
@@ -230,9 +441,10 @@ export default function Home({ notify, toNPR, toSOL }) {
           <div className="section-label">How It Works</div>
           <div className="section-title">Five steps from signup to payout.</div>
         </div>
-        <div ref={addRevealRef} className="reveal steps-grid">
+        {/* hiwRef goes on the steps-grid wrapper so SVG covers only the cards */}
+        <div ref={hiwRef} className='steps-grid hiw-grid-wrap'>
           {HOW_IT_WORKS.map(card => (
-            <StepCard key={card.step} card={card} />
+            <StepCard key={card.steps} card={card} />
           ))}
         </div>
       </section>
@@ -263,7 +475,12 @@ export default function Home({ notify, toNPR, toSOL }) {
               <p className="done-desc">
                 Your insurance policy is live on Solana devnet. You will receive SOL directly when drought conditions are met.
               </p>
-              <a href={`https://explorer.solana.com/address/${wallet.publicKey?.toBase58()}?cluster=devnet`} target="_blank" rel="noreferrer" className="cryo-btn">
+              <a
+                href={`https://explorer.solana.com/address/${wallet.publicKey?.toBase58()}?cluster=devnet`}
+                target="_blank"
+                rel="noreferrer"
+                className="cryo-btn"
+              >
                 View on Explorer →
               </a>
             </div>
@@ -288,7 +505,7 @@ export default function Home({ notify, toNPR, toSOL }) {
               <div style={{ marginBottom: 36 }}>
                 <div className="progress-steps">
                   {['Region', 'Crop', 'Season', 'Duration', 'Coverage', 'Review'].map((name, i) => {
-                    const n = i + 1;
+                    const n        = i + 1;
                     const isDone   = wizardStep > n;
                     const isActive = wizardStep === n;
                     return (
@@ -316,7 +533,14 @@ export default function Home({ notify, toNPR, toSOL }) {
                   <WizardStep question="Where is your farm?" hint="Select the district closest to your farmland.">
                     <div className="options-grid">
                       {REGIONS.map(r => (
-                        <OptionCard key={r} selected={region === r} onClick={() => setRegion(r)} icon={REGION_META[r].emoji} label={r.charAt(0).toUpperCase() + r.slice(1)} sub={REGION_META[r].province} />
+                        <OptionCard
+                          key={r}
+                          selected={region === r}
+                          onClick={() => setRegion(r)}
+                          icon={REGION_META[r].emoji}
+                          label={r.charAt(0).toUpperCase() + r.slice(1)}
+                          sub={REGION_META[r].province}
+                        />
                       ))}
                     </div>
                     <WizardNav onNext={() => goTo(2)} nextDisabled={!canNext[1]} showBack={false} />
@@ -327,7 +551,14 @@ export default function Home({ notify, toNPR, toSOL }) {
                   <WizardStep question="What do you grow?" hint="Your crop determines the drought threshold.">
                     <div className="options-grid">
                       {CROPS.map(c => (
-                        <OptionCard key={c} selected={crop === c} onClick={() => { setCrop(c); setAdjustment(0); }} icon={CROP_META[c].emoji} label={c} sub={CROP_META[c].nepali} />
+                        <OptionCard
+                          key={c}
+                          selected={crop === c}
+                          onClick={() => { setCrop(c); setAdjustment(0); }}
+                          icon={CROP_META[c].emoji}
+                          label={c}
+                          sub={CROP_META[c].nepali}
+                        />
                       ))}
                     </div>
                     <WizardNav onBack={() => goTo(1)} onNext={() => goTo(3)} nextDisabled={!canNext[2]} />
@@ -342,7 +573,14 @@ export default function Home({ notify, toNPR, toSOL }) {
                         { val: 'Winter',  emoji: '❄️', sub: 'Nov – Feb' },
                         { val: 'Spring',  emoji: '🌸', sub: 'Mar – May' },
                       ].map(s => (
-                        <OptionCard key={s.val} selected={season === s.val} onClick={() => { setSeason(s.val); setAdjustment(0); }} icon={s.emoji} label={s.val} sub={s.sub} />
+                        <OptionCard
+                          key={s.val}
+                          selected={season === s.val}
+                          onClick={() => { setSeason(s.val); setAdjustment(0); }}
+                          icon={s.emoji}
+                          label={s.val}
+                          sub={s.sub}
+                        />
                       ))}
                     </div>
                     <WizardNav onBack={() => goTo(2)} onNext={() => goTo(4)} nextDisabled={!canNext[3]} />
@@ -353,7 +591,13 @@ export default function Home({ notify, toNPR, toSOL }) {
                   <WizardStep question="How long do you need coverage?" hint="Longer coverage protects you through the full season.">
                     <div className="options-grid">
                       {DURATIONS.map(d => (
-                        <OptionCard key={d.value} selected={duration === d.value} onClick={() => setDuration(d.value)} label={d.label} sub={d.sub} />
+                        <OptionCard
+                          key={d.value}
+                          selected={duration === d.value}
+                          onClick={() => setDuration(d.value)}
+                          label={d.label}
+                          sub={d.sub}
+                        />
                       ))}
                     </div>
                     <WizardNav onBack={() => goTo(3)} onNext={() => goTo(5)} nextDisabled={!canNext[4]} />
@@ -365,7 +609,14 @@ export default function Home({ notify, toNPR, toSOL }) {
                     <div className="coverage-wrap">
                       <div className="input-group">
                         <div className="input-prefix">Rs.</div>
-                        <input className="coverage-input" type="number" placeholder="50,000" min="1000" value={coverage} onChange={e => setCoverage(e.target.value)} />
+                        <input
+                          className="coverage-input"
+                          type="number"
+                          placeholder="50,000"
+                          min="1000"
+                          value={coverage}
+                          onChange={e => setCoverage(e.target.value)}
+                        />
                         <div className={`sol-badge${coverage && parseFloat(coverage) >= 1000 ? ' visible' : ''}`}>
                           ≈ {solAmount.toFixed(4)} SOL
                         </div>
@@ -451,9 +702,11 @@ export default function Home({ notify, toNPR, toSOL }) {
   );
 }
 
-/* ── StepCard — own component so hooks are legal ── */
+/* ─────────────────────────────────────────────────────────────────
+   StepCard — own component so hooks are legal
+───────────────────────────────────────────────────────────────── */
 function StepCard({ card }) {
-  const [npOn,     setNpOn]     = useState(false);
+  const [npOn, setNpOn] = useState(false);
 
   return (
     <div
@@ -461,15 +714,17 @@ function StepCard({ card }) {
       style={{
         background:  card.bg,
         borderColor: card.border,
-        color:       card.accent,   /* used by ::before pseudo-element for accent bar */
+        color:       card.accent,
+        position:    'relative',
+        zIndex:      2,
       }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
     >
-      <div className="step-card-num" style={{ color: card.accent }}>{card.step}</div>
+      <div className="step-card-num"  style={{ color: card.accent }}>{card.step}</div>
       <div className="step-card-icon" style={{ background: card.iconBg }}>{card.emoji}</div>
       <h3 className="step-card-title">{card.title}</h3>
-      <p className="step-card-desc">{card.desc}</p>
+      <p  className="step-card-desc">{card.desc}</p>
       {npOn && (
         <p className="step-card-np visible" style={{ borderTopColor: card.border }}>
           {card.np}
@@ -484,7 +739,9 @@ function StepCard({ card }) {
   );
 }
 
-/* ── Sub-components ── */
+/* ─────────────────────────────────────────────────────────────────
+   Sub-components
+───────────────────────────────────────────────────────────────── */
 function WizardStep({ question, hint, children }) {
   return (
     <div>
