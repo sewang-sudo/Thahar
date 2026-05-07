@@ -1,30 +1,32 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
-import { Connection, PublicKey, Keypair } from '@solana/web3.js';
-import pkg from '@coral-xyz/anchor';
-const {AnchorProvider, Program, BN} = pkg;
-import idl from './idl.json' with { type: 'json' };
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
+import pkg from "@coral-xyz/anchor";
+const { AnchorProvider, Program, BN } = pkg;
+import idl from "./idl.json" with { type: "json" };
 
 dotenv.config();
 
 const app = express();
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  }),
+);
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const PROGRAM_ID = process.env.PROGRAM_ID;
 const RPC_URL = process.env.RPC_URL;
 
-const connection = new Connection(RPC_URL, 'confirmed');
+const connection = new Connection(RPC_URL, "confirmed");
 
 const walletKeypair = Keypair.fromSecretKey(
-  Uint8Array.from(JSON.parse(process.env.WALLET_KEY))
+  Uint8Array.from(JSON.parse(process.env.WALLET_KEY)),
 );
 
 const wallet = {
@@ -34,74 +36,102 @@ const wallet = {
 };
 
 const provider = new AnchorProvider(connection, wallet, {
-  commitment: 'confirmed',
+  commitment: "confirmed",
 });
 
 const program = new Program(idl, provider);
 
-app.get('/actions.json', (req, res)=> {
+app.get("/actions.json", (req, res) => {
   res.json({
     rules: [
       {
-        pathPattern: '/api/blink',
-        apiPath: '/api/blink',
+        pathPattern: "/api/blink",
+        apiPath: "/api/blink",
       },
       {
-        pathPattern: '/api/blink/register',
-        apiPath: '/api/blink/register',
-      }
-    ]
+        pathPattern: "/api/blink/register",
+        apiPath: "/api/blink/register",
+      },
+    ],
   });
 });
 
-app.get('/api/blink', (req, res) => {
-  res.set('X-Action-Version', '1');
-  res.set('X-Blockchain-Ids', 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1');
+app.get("/api/blink", (req, res) => {
+  res.set("X-Action-Version", "1");
+  res.set("X-Blockchain-Ids", "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1");
   res.json({
-    title: 'Thahar Crop Insurance',
-    description: 'Register your crop insurance policy on Solana. Protect your harvest.',
-    icon: 'https://raw.githubusercontent.com/sewang-sudo/Thahar/main/blinks/ThaharLogo.png',
-    label: 'Register Policy',
+    title: "Thahar Crop Insurance",
+    description:
+      "Register your crop insurance policy on Solana. Protect your harvest.",
+    icon: "https://raw.githubusercontent.com/sewang-sudo/Thahar/main/blinks/ThaharLogo.png",
+    label: "Register Policy",
     links: {
       actions: [
         {
-          label: 'Register Policy',
-          href: '/api/blink/register',
-        }
-      ]
-    }
+          label: "Register Policy",
+          href: "/api/blink/register?region={region}&coverage={coverage}",
+          parameters: [
+            {
+              name: "region",
+              label: "Your District",
+              type: "select",
+              required: true,
+              options: [
+                { label: "Kathmandu", value: "kathmandu" },
+                { label: "Khotang", value: "khotang" },
+                { label: "Chitwan", value: "chitwan" },
+              ],
+            },
+            {
+              name: "coverage",
+              label: "Coverage Amount (SOL)",
+              type: "select",
+              required: true,
+              options: [
+                { label: "0.5 SOL", value: "0.5" },
+                { label: "1 SOL", value: "1" },
+                { label: "1.5 SOL", value: "1.5" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   });
 });
 
-app.post('/api/blink/register', async (req, res) => {
+app.post("/api/blink/register", async (req, res) => {
   try {
-    const { account }= req.body;
-    
+    const { account } = req.body;
+    const region = req.query.region || "kathmandu";
+    const coverageSol = parseFloat(req.query.coverage) || 1;
+    const coverageLamports = Math.floor(coverageSol * 1_000_000_000);
+
     if (!account) {
-      return res.status(400).json({ error: 'account is required' });
+      return res.status(400).json({ error: "account is required" });
     }
-    if ( account.length > 100) {
-      return res.status(400).json({ error: 'invalid account address' });
+    if (account.length > 100) {
+      return res.status(400).json({ error: "invalid account address" });
     }
 
     let farmerPubkey;
     try {
       farmerPubkey = new PublicKey(account);
     } catch {
-      return res.status(400).json({ error: 'invalid account address' });
+      return res.status(400).json({ error: "invalid account address" });
     }
 
     const [policyPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('policy'), farmerPubkey.toBuffer()],
-      new PublicKey(PROGRAM_ID)
+      [Buffer.from("policy"), farmerPubkey.toBuffer()],
+      new PublicKey(PROGRAM_ID),
     );
 
     const transaction = await program.methods
       .registerPolicy(
         { crop: {} },
-        new BN(1000000000),
+        new BN(coverageLamports),
         new BN(50),
-        'kathmandu',
+        region,
         180,
       )
       .accounts({
@@ -120,63 +150,64 @@ app.post('/api/blink/register', async (req, res) => {
       verifySignatures: false,
     });
 
-    const base64 = serialized.toString('base64');
+    const base64 = serialized.toString("base64");
 
     res.json({
       transaction: base64,
-      message: 'Register your crop insurance policy on Thahar.',
+      message: "Register your crop insurance policy on Thahar.",
     });
-
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
 const aiLimiter = rateLimit({
-  windowMs :  60 * 1000,
-  max : 10,
-  message : {error : 'Too many request, please try again later.'}
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Too many request, please try again later." },
 });
 
-app.post('/api/ai-advice', aiLimiter, async (req, res) => {
+app.post("/api/ai-advice", aiLimiter, async (req, res) => {
   try {
     const { messages } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'messages array is required' });
+      return res.status(400).json({ error: "messages array is required" });
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a crop insurance advisor for Nepali farmers in Nepal.
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: `You are a crop insurance advisor for Nepali farmers in Nepal.
 When a farmer asks about risk or advice, give short advice in max 2 sentences. Never include JSON in plain text responses.
 When a farmer confirms they want to register a policy, respond ONLY with this exact JSON and nothing else, no extra text:
 {"action":"register","coverage":1.5,"message":"Registering your policy now."}
 Adjust coverage between 0.1 and 2.0 SOL based on risk.
 If you include any text before or after the JSON, it will break the system.`,
-          },
-          ...messages,
-        ],
-      }),
-    });
+            },
+            ...messages,
+          ],
+        }),
+      },
+    );
 
     const data = await response.json();
     const advice = data.choices[0].message.content;
     res.json({ advice });
-
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
