@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { registerPolicy, payPremium } from "../utils/thahar";
-import ThaharLogo from "../assets/ThaharLogo.png";
 
 const REGIONS = ["kathmandu", "khotang", "chitwan"];
 const CROPS = ["Rice", "Maize", "Wheat", "Millet"];
-const SEASONS = ["Monsoon", "Winter", "Spring"];
 const DURATIONS = [
   { value: 30, label: "30 days", sub: "Short term" },
   { value: 90, label: "90 days", sub: "One season" },
@@ -32,69 +30,10 @@ const THRESHOLDS = {
 };
 const MOCK_RAINFALL = { kathmandu: 38, khotang: 22, chitwan: 55 };
 
-const HOW_IT_WORKS = [
-  {
-    emoji: "🔗",
-    step: "01",
-    title: "Connect Wallet",
-    desc: "Link your Phantom wallet. No signup, no paperwork — your wallet is your identity.",
-    np: "आफ्नो Phantom वालेट जोड्नुहोस्। कुनै दर्ता वा कागजपत्र आवश्यक छैन।",
-    bg: "#E6F1FB",
-    border: "#B5D4F4",
-    accent: "#185FA5",
-    iconBg: "#B5D4F4",
-  },
-  {
-    emoji: "📋",
-    step: "02",
-    title: "Register Policy",
-    desc: "Pick your region, crop, and season. Set your coverage amount.",
-    np: "आफ्नो क्षेत्र, बाली र मौसम छान्नुहोस्।",
-    bg: "#FAEEDA",
-    border: "#FAC775",
-    accent: "#854F0B",
-    iconBg: "#FAC775",
-  },
-  {
-    emoji: "💳",
-    step: "03",
-    title: "Pay Premium",
-    desc: "Pay 5% of coverage as premium. Funds go straight to the on-chain treasury.",
-    np: "कवरेजको ५% प्रिमियम तिर्नुहोस्।",
-    bg: "#EEEDFE",
-    border: "#CECBF6",
-    accent: "#534AB7",
-    iconBg: "#CECBF6",
-  },
-  {
-    emoji: "🌦",
-    step: "04",
-    title: "Oracle Monitors",
-    desc: "Chainlink oracles track rainfall and temperature 24/7 against your thresholds.",
-    np: "Oracle ले वर्षा र तापमान २४/७ निगरानी गर्छ।",
-    bg: "#E1F5EE",
-    border: "#9FE1CB",
-    accent: "#0F6E56",
-    iconBg: "#9FE1CB",
-  },
-  {
-    emoji: "⚡",
-    step: "05",
-    title: "Auto Payout",
-    desc: "Threshold crossed? SOL lands in your wallet automatically — no claim needed.",
-    np: "सीमा पार भयो? SOL स्वतः तपाईंको वालेटमा आउँछ।",
-    bg: "#EAF3DE",
-    border: "#C0DD97",
-    accent: "#3B6D11",
-    iconBg: "#C0DD97",
-  },
-];
-
 export default function Home({ notify, toNPR, toSOL }) {
   const wallet = useWallet();
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isInPhantom = window.phantom?.solana?.isPhantom;
-
   const [wizardStep, setWizardStep] = useState(1);
   const [txStep, setTxStep] = useState("register");
   const [loading, setLoading] = useState(false);
@@ -104,12 +43,9 @@ export default function Home({ notify, toNPR, toSOL }) {
   const [duration, setDuration] = useState(null);
   const [coverage, setCoverage] = useState("");
   const [adjustment, setAdjustment] = useState(0);
-
   const wizardRef = useRef(null);
   const revealRefs = useRef([]);
-  const hiwRef = useRef(null);
 
-  // ── Scroll reveal ──────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) =>
@@ -123,203 +59,6 @@ export default function Home({ notify, toNPR, toSOL }) {
     );
     revealRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, []);
-
-  // ── Mobile-only snake animation ────────────────────────────────
-  // Constraint 1: Only runs when viewport width < 1024px.
-  // Constraint 2: Exact path math per spec (Arc corners + Cubic Bezier connectors).
-  // Constraint 3: useRef for pathEl; coords via getBoundingClientRect() delta.
-  // Constraint 4: Cards and HOW_IT_WORKS array are untouched.
-  useEffect(() => {
-    // ── Gate: desktop is untouched ──────────────────────────────
-    if (window.innerWidth >= 1024) return;
-
-    const container = hiwRef.current;
-    if (!container) return;
-
-    const SNAKE_SIZE = 110;
-    const r = 14; // corner radius per constraint 2
-
-    // Constraint 3: useRef for the live path element
-    const pathRef = { current: null };
-    let svgEl = null;
-    let totalLength = 0;
-
-    // ── Build / rebuild the SVG and path ───────────────────────
-    function drawPath() {
-      if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
-      pathRef.current = null;
-      totalLength = 0;
-
-      const cards = Array.from(
-        container.querySelectorAll(".step-card-colored"),
-      );
-      if (!cards.length) return;
-
-      const style = window.getComputedStyle(cards[0]);
-const b = parseFloat(style.borderLeftWidth) || 0;
-
-const coords = cards.map((card) => {
-  const isActive = card.classList.contains("active");
-  const shift = isActive ? 6 : 0;
-  const scale = isActive ? 1.01 : 1;
-  const w = card.offsetWidth * scale;
-  const h = card.offsetHeight * scale;
-  const x = card.offsetLeft + shift - (w - card.offsetWidth) / 2;
-  const y = card.offsetTop - (h - card.offsetHeight) / 2;
-  return { x, y, w, h };
-});
-      // Now insert SVG after measuring
-      svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svgEl.setAttribute("aria-hidden", "true");
-      svgEl.style.cssText = [
-        "position:absolute",
-        "top:0",
-        "left:0",
-        "width:100%",
-        "height:100%",
-        "pointer-events:none",
-        "z-index:10",
-        "overflow:visible",
-      ].join(";");
-      container.style.position = "relative";
-      container.insertBefore(svgEl, container.firstChild);
-
-      let d = "";
-      coords.forEach(({ x, y, w, h }, i) => {
-        const entryX = x + r;
-
-        if (i === 0) d += `M ${entryX} ${y} `;
-        else d += `L ${entryX} ${y} `;
-
-        d += `L ${x + w - r} ${y} `;
-        d += `A ${r} ${r} 0 0 1 ${x + w} ${y + r} `;
-        d += `L ${x + w} ${y + h - r} `;
-        d += `A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} `;
-        d += `L ${entryX} ${y + h} `;
-
-        if (i < coords.length - 1) {
-          const nextY = coords[i + 1].y;
-          d += `C ${x - 2} ${y + h}, ${x - 2} ${nextY}, ${entryX} ${nextY} `;
-        }
-      });
-
-      const el = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      el.setAttribute("d", d);
-      el.setAttribute("fill", "none");
-      el.setAttribute("stroke", HOW_IT_WORKS[0].accent);
-      el.setAttribute("stroke-width", "6");
-      el.setAttribute("stroke-linecap", "round");
-      el.setAttribute("stroke-linejoin", "round");
-      svgEl.appendChild(el);
-
-      totalLength = el.getTotalLength();
-      el.style.strokeDasharray = `${SNAKE_SIZE} ${totalLength}`;
-      el.style.strokeDashoffset = `${SNAKE_SIZE}`;
-      pathRef.current = el;
-    }
-
-    // ── Drive the snake forward ─────────────────────────────────
-    function moveSnake(progress) {
-      const el = pathRef.current;
-      if (!el || !totalLength) return;
-
-      const p = Math.min(Math.max(progress, 0), 1);
-
-      // Constraint 3: strokeDashoffset = 110 - (p * (totalLength + 110))
-      el.style.strokeDashoffset = SNAKE_SIZE - p * (totalLength + SNAKE_SIZE);
-
-      // Constraint 3: head position via getPointAtLength
-      const headDist = Math.min(p * totalLength, totalLength - 1);
-      const head = el.getPointAtLength(headDist);
-      // head.x / head.y are already in SVG/container-local space ✓
-
-      // Constraint 3: Active-state detection — compare head.y (container-local)
-      //               against each card's container-local top/bottom.
-      const cRect = container.getBoundingClientRect();
-      const cards = Array.from(
-        container.querySelectorAll(".step-card-colored"),
-      );
-cards.forEach((card, i) => {
-  const cardTop = card.offsetTop;
-  const cardBottom = card.offsetTop + card.offsetHeight;
-  const wasActive = card.classList.contains("active");
-  const isNowActive = head.y >= cardTop - 2 && head.y <= cardBottom + 2;
-
-  if (isNowActive && !wasActive) {
-    card.classList.add("active");
-    card.style.boxShadow = `0 12px 24px ${HOW_IT_WORKS[i].accent}33`;
-    el.setAttribute("stroke", HOW_IT_WORKS[i].accent);
-    // Redraw after transition (0.4s)
-    setTimeout(drawPath, 420);
-  } else if (!isNowActive && wasActive) {
-    card.classList.remove("active");
-    card.style.boxShadow = "";
-    setTimeout(drawPath, 420);
-  } else if (isNowActive) {
-    el.setAttribute("stroke", HOW_IT_WORKS[i].accent);
-  }
-});
-
-    }
-
-    // ── Scroll → progress mapping ───────────────────────────────
-    function handleScroll() {
-      if (!pathRef.current || !totalLength) return;
-
-      const rect = container.getBoundingClientRect();
-      const winH = window.innerHeight;
-
-      const start = winH;
-      const end = -rect.height;
-
-      const progress = Math.min(
-        Math.max((start - rect.top) / (start - end), 0),
-        1,
-      );
-
-      moveSnake(progress);
-    }
-
-    // ── Combined resize handler (rebuild path then re-sync position) ──
-    function handleResize() {
-      // Re-gate: if user resizes to desktop, tear everything down
-      if (window.innerWidth >= 1024) {
-        if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
-        pathRef.current = null;
-        totalLength = 0;
-        container.querySelectorAll(".step-card-colored").forEach((c) => {
-          c.classList.remove("active");
-          c.style.boxShadow = "";
-        });
-        return;
-      }
-      drawPath();
-      handleScroll();
-    }
-
-    // ── Init: give browser one paint tick so card rects are stable ──
-    const timer = setTimeout(() => {
-      drawPath();
-      handleScroll();
-    }, 800);
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleResize, { passive: true });
-
-    // ── Cleanup ─────────────────────────────────────────────────
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-      if (svgEl && svgEl.parentNode) svgEl.parentNode.removeChild(svgEl);
-      if (container) {
-        container.querySelectorAll(".step-card-colored").forEach((card) => {
-          card.classList.remove("active");
-          card.style.boxShadow = "";
-        });
-      }
-    };
   }, []);
 
   const addRevealRef = (el) => {
@@ -410,8 +149,7 @@ cards.forEach((card, i) => {
     if (!wallet.connected) return notify("Connect your wallet first", "error");
     setLoading(true);
     try {
-      const premiumLamports = solAmount * 1e9 * 0.05;
-      const sig = await payPremium(wallet, premiumLamports);
+      const sig = await payPremium(wallet, solAmount * 1e9 * 0.05);
       notify(`Premium paid! TX: ${sig.slice(0, 8)}...`);
       setTxStep("done");
     } catch (e) {
@@ -430,25 +168,23 @@ cards.forEach((card, i) => {
     4: !!duration,
     5: !!coverage && parseFloat(coverage) >= 1000,
   };
-
   const risk = getRisk();
 
   return (
     <div className="page-container" style={{ maxWidth: "100%", padding: 0 }}>
-      {/* ── HERO ── */}
       <section className="home-hero">
         <div className="home-hero-inner">
           <div className="hero-left">
-            <div className="hero-badge" style={{ animationDelay: "0s" }}>
+            <div className="hero-badge">
               <span className="live-dot" />
               Live on Solana Devnet
             </div>
-            <h1 className="hero-title" style={{ animationDelay: "0.1s" }}>
+            <h1 className="hero-title">
               Your crops are
               <br />
               <em>protected.</em>
             </h1>
-            <p className="hero-sub" style={{ animationDelay: "0.2s" }}>
+            <p className="hero-sub">
               Thahar brings parametric crop insurance to Nepali farmers —
               automated, transparent, instant. No middlemen. No paperwork. Just
               protection when it matters.
@@ -470,8 +206,6 @@ cards.forEach((card, i) => {
               </a>
             </div>
           </div>
-
-          {/* Oracle card */}
           <div className="hero-oracle-wrap">
             <div className="cryo-card oracle-card">
               <div className="oracle-card-header">
@@ -543,7 +277,6 @@ cards.forEach((card, i) => {
         </div>
       </section>
 
-      {/* ── STATS ── */}
       <div ref={addRevealRef} className="reveal stats-strip">
         <div className="stats-inner">
           {[
@@ -560,28 +293,80 @@ cards.forEach((card, i) => {
         </div>
       </div>
 
-      {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="hiw-section">
         <div ref={addRevealRef} className="reveal" style={{ marginBottom: 12 }}>
           <div className="section-label">How It Works</div>
           <div className="section-title">Five steps from signup to payout.</div>
         </div>
-        {/* hiwRef goes on the steps-grid wrapper so SVG covers only the cards */}
-        <div ref={hiwRef} className="steps-grid hiw-grid-wrap">
-          {HOW_IT_WORKS.map((card) => (
+        <div className="steps-grid hiw-grid-wrap">
+          {[
+            {
+              step: "01",
+              emoji: "📍",
+              title: "Choose Your Region",
+              desc: "Select the district closest to your farmland.",
+              np: "आफ्नो क्षेत्र छान्नुहोस्।",
+              bg: "#f0fdf4",
+              border: "#bbf7d0",
+              accent: "#16a34a",
+              iconBg: "#dcfce7",
+            },
+            {
+              step: "02",
+              emoji: "🌾",
+              title: "Pick Your Crop",
+              desc: "Your crop type determines the drought threshold.",
+              np: "आफ्नो बाली छान्नुहोस्।",
+              bg: "#fefce8",
+              border: "#fde68a",
+              accent: "#ca8a04",
+              iconBg: "#fef9c3",
+            },
+            {
+              step: "03",
+              emoji: "💰",
+              title: "Set Coverage",
+              desc: "Enter your crop value in Nepali Rupees.",
+              np: "बीमा रकम तोक्नुहोस्।",
+              bg: "#eff6ff",
+              border: "#bfdbfe",
+              accent: "#2563eb",
+              iconBg: "#dbeafe",
+            },
+            {
+              step: "04",
+              emoji: "⛓",
+              title: "Register On-Chain",
+              desc: "Your policy is stored on Solana — no middlemen.",
+              np: "नीति दर्ता गर्नुहोस्।",
+              bg: "#fdf4ff",
+              border: "#e9d5ff",
+              accent: "#9333ea",
+              iconBg: "#f3e8ff",
+            },
+            {
+              step: "05",
+              emoji: "✅",
+              title: "Auto Payout",
+              desc: "When drought is detected, SOL is sent instantly.",
+              np: "स्वचालित भुक्तानी पाउनुहोस्।",
+              bg: "#fff1f2",
+              border: "#fecdd3",
+              accent: "#e11d48",
+              iconBg: "#ffe4e6",
+            },
+          ].map((card) => (
             <StepCard key={card.step} card={card} />
           ))}
         </div>
       </section>
 
-      {/* ── WIZARD ── */}
       <section id="register-section" ref={wizardRef} className="wizard-section">
         <div className="wizard-inner">
           <div className="wizard-header-block">
             <div className="wizard-section-label">Thahar Protocol</div>
             <div className="wizard-section-title">Register Your Policy</div>
           </div>
-
           {!wallet.connected ? (
             <div className="cryo-card connect-prompt">
               <p>
@@ -697,7 +482,6 @@ cards.forEach((card, i) => {
                   })}
                 </div>
               </div>
-
               <div className="cryo-card wizard-card">
                 {wizardStep === 1 && (
                   <WizardStep
@@ -723,7 +507,6 @@ cards.forEach((card, i) => {
                     />
                   </WizardStep>
                 )}
-
                 {wizardStep === 2 && (
                   <WizardStep
                     question="What do you grow?"
@@ -751,7 +534,6 @@ cards.forEach((card, i) => {
                     />
                   </WizardStep>
                 )}
-
                 {wizardStep === 3 && (
                   <WizardStep
                     question="Which season?"
@@ -783,7 +565,6 @@ cards.forEach((card, i) => {
                     />
                   </WizardStep>
                 )}
-
                 {wizardStep === 4 && (
                   <WizardStep
                     question="How long do you need coverage?"
@@ -807,7 +588,6 @@ cards.forEach((card, i) => {
                     />
                   </WizardStep>
                 )}
-
                 {wizardStep === 5 && (
                   <WizardStep
                     question="How much coverage?"
@@ -883,7 +663,6 @@ cards.forEach((card, i) => {
                     />
                   </WizardStep>
                 )}
-
                 {wizardStep === 6 && (
                   <WizardStep
                     question="Review your policy"
@@ -958,7 +737,6 @@ cards.forEach((card, i) => {
         </div>
       </section>
 
-      {/* ── CTA STRIP ── */}
       <div ref={addRevealRef} className="reveal cta-section">
         <div>
           <div className="cta-eyebrow">Built on Solana</div>
@@ -976,14 +754,29 @@ cards.forEach((card, i) => {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   StepCard — own component so hooks are legal
-───────────────────────────────────────────────────────────────── */
 function StepCard({ card }) {
   const [npOn, setNpOn] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("in-view");
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
+      ref={cardRef}
       className="cryo-card step-card-colored"
       style={{
         background: card.bg,
@@ -991,35 +784,18 @@ function StepCard({ card }) {
         color: card.accent,
         position: "relative",
         zIndex: 2,
+        transitionDelay: `${(parseInt(card.step) - 1) * 0.1}s`,
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "";
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = ""; }}
     >
-      <div className="step-card-num" style={{ color: card.accent }}>
-        {card.step}
-      </div>
-      <div className="step-card-icon" style={{ background: card.iconBg }}>
-        {card.emoji}
-      </div>
+      <div className="step-card-num" style={{ color: card.accent }}>{card.step}</div>
+      <div className="step-card-icon" style={{ background: card.iconBg }}>{card.emoji}</div>
       <h3 className="step-card-title">{card.title}</h3>
       <p className="step-card-desc">{card.desc}</p>
-      {npOn && (
-        <p
-          className="step-card-np visible"
-          style={{ borderTopColor: card.border }}
-        >
-          {card.np}
-        </p>
-      )}
+      {npOn && <p className="step-card-np visible" style={{ borderTopColor: card.border }}>{card.np}</p>}
       <div className="step-card-footer">
-        <button
-          className="step-card-translate"
-          onClick={() => setNpOn((o) => !o)}
-        >
+        <button className="step-card-translate" onClick={() => setNpOn((o) => !o)}>
           {npOn ? "🇬🇧 EN" : "🇳🇵 NP"}
         </button>
       </div>
@@ -1027,9 +803,6 @@ function StepCard({ card }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Sub-components
-───────────────────────────────────────────────────────────────── */
 function WizardStep({ question, hint, children }) {
   return (
     <div>
