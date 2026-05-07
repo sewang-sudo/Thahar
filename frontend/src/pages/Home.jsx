@@ -288,19 +288,28 @@ export default function Home({ notify, toNPR, toSOL }) {
           </div>
         </div>
       </section>
-
       <div ref={addRevealRef} className="reveal stats-strip">
         <div className="stats-inner">
           {[
-            { val: "~24h", label: "Automatic payout after drought trigger" },
-            { val: "3", label: "Regions covered across Nepal" },
-            { val: "0%", label: "Middlemen in the payout process" },
-            { val: "Solana", label: "Sub-second finality, near-zero fees" },
+            {
+              val: 24,
+              suffix: "h",
+              prefix: "~",
+              label: "Automatic payout after drought trigger",
+            },
+            { val: 3, suffix: "", label: "Regions covered across Nepal" },
+            {
+              val: 0,
+              suffix: "%",
+              label: "Zero Middlemen in the payout process",
+            },
+            {
+              val: "Solana",
+              label: "Sub-second finality, near-zero fees",
+              typewriter: true,
+            },
           ].map((s, i) => (
-            <div key={i} className="stat-item">
-              <div className="stat-val">{s.val}</div>
-              <div className="stat-label">{s.label}</div>
-            </div>
+            <StatItem key={i} {...s} />
           ))}
         </div>
       </div>
@@ -762,6 +771,85 @@ export default function Home({ notify, toNPR, toSOL }) {
           Register Policy →
         </button>
       </div>
+    </div>
+  );
+}
+
+function StatItem({
+  val,
+  suffix = "",
+  prefix = "",
+  label,
+  static: isStatic,
+  typewriter: isTypewriter,
+}) {
+  const [count, setCount] = useState(0);
+  const [typed, setTyped] = useState("");
+  const ref = useRef(null);
+  const animated = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (isTypewriter) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting && !animated.current) {
+            animated.current = true;
+            let i = 0;
+            const timer = setInterval(() => {
+              setTyped(val.slice(0, i + 1));
+              i++;
+              if (i >= val.length) clearInterval(timer);
+            }, 120);
+          }
+        },
+        { threshold: 0.3 },
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
+    }
+
+    if (isStatic) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated.current) {
+          animated.current = true;
+          const target = val;
+          const duration = 1000;
+          const steps = 50;
+          const increment = target / steps;
+          let current = 0;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              setCount(target);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(current));
+            }
+          }, duration / steps);
+        }
+      },
+      { threshold: 0.3 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [val, isStatic, isTypewriter]);
+
+  return (
+    <div className="stat-item" ref={ref}>
+      <div className="stat-val">
+        {isTypewriter
+          ? typed
+          : isStatic
+            ? val
+            : `${prefix || ""}${count}${suffix}`}
+      </div>
+      <div className="stat-label">{label}</div>
     </div>
   );
 }
