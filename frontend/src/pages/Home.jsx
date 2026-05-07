@@ -757,55 +757,95 @@ export default function Home({ notify, toNPR, toSOL }) {
 function StepCard({ card }) {
   const [npOn, setNpOn] = useState(false);
   const cardRef = useRef(null);
-  const revealedRef = useRef(false);
 
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
 
-    // Set initial hidden state
+    const isMobile = window.innerWidth < 1024;
+    const stepIndex = parseInt(card.step) - 1;
+
+    // Initial hidden state
     el.style.opacity = "0";
     el.style.transform = "scale(0.6)";
-    el.style.transition = "opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1), transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)";
+    el.style.transition = "opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1)";
 
-    // Step 1: Reveal observer
-    const revealObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !revealedRef.current) {
-          setTimeout(() => {
-            el.style.opacity = "1";
-            el.style.transform = "scale(1)";
-            revealedRef.current = true;
-          }, (parseInt(card.step) - 1) * 100);
-          revealObserver.unobserve(el);
-        }
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
-    );
+    // Single observer that handles both reveal and unreveal
+    const observer = new IntersectionObserver(
+  ([entry]) => {
+    const fromBottom = entry.boundingClientRect.top > window.innerHeight / 2;
 
-    revealObserver.observe(el);
+    if (entry.isIntersecting) {
+      // Scrolling down → reveal left to right (card 1 first)
+      // Scrolling up → reveal right to left (card 5 first)
+      const delay = fromBottom
+        ? stepIndex * 150
+        : (4 - stepIndex) * 150;
+      setTimeout(() => {
+        el.style.opacity = "1";
+        el.style.transform = "scale(1)";
+      }, delay);
+    } else {
+      // Unreveal always right to left (card 5 first)
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transform = "scale(0.6)";
+      }, (4 - stepIndex) * 150);
+    }
+  },
+  { threshold: 0.15, rootMargin: "-15% 0px -25% 0px" }
+);
 
-    // Step 2: Scroll-driven enlarge after reveal
-    function handleScroll() {
-      if (!revealedRef.current) return;
-      const rect = el.getBoundingClientRect();
-      const viewH = window.innerHeight;
-      // center of card relative to viewport center
-      const cardCenter = rect.top + rect.height / 2;
-      const viewCenter = viewH / 2;
-      const distance = Math.abs(cardCenter - viewCenter);
-      const maxDist = viewH * 0.25;
-      const scale = distance > maxDist ? 1 : Math.max(1, 1.12 - (distance / maxDist) * 0.12);
-      el.style.transform = `scale(${scale.toFixed(3)})`;
+    observer.observe(el);
+
+    if (!isMobile) {
+      // Desktop: hover enlarge
+      function handleMouseEnter() {
+        el.style.transform = "scale(1.08)";
+        el.style.boxShadow = `0 20px 48px ${card.border}99`;
+        el.style.zIndex = "10";
+      }
+
+      function handleMouseLeave() {
+        el.style.transform = "scale(1)";
+        el.style.boxShadow = "";
+        el.style.zIndex = "2";
+      }
+
+      el.addEventListener("mouseenter", handleMouseEnter);
+      el.addEventListener("mouseleave", handleMouseLeave);
+
+      return () => {
+        observer.disconnect();
+        el.removeEventListener("mouseenter", handleMouseEnter);
+        el.removeEventListener("mouseleave", handleMouseLeave);
+      };
     }
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    if (isMobile) {
+      // Mobile: scroll-driven enlarge
+      function handleScrollMobile() {
+        const rect = el.getBoundingClientRect();
+        const viewH = window.innerHeight;
+        const cardCenter = rect.top + rect.height / 2;
+        const viewCenter = viewH / 2;
+        const distance = Math.abs(cardCenter - viewCenter);
+        const maxDist = viewH * 0.25;
+        // Only enlarge if already visible
+        if (el.style.opacity === "1") {
+          const scale = distance > maxDist ? 1 : Math.max(1, 1.12 - (distance / maxDist) * 0.12);
+          el.style.transform = `scale(${scale.toFixed(3)})`;
+        }
+      }
+      window.addEventListener("scroll", handleScrollMobile, { passive: true });
+      return () => {
+        observer.disconnect();
+        window.removeEventListener("scroll", handleScrollMobile);
+      };
+    }
 
-    return () => {
-      revealObserver.disconnect();
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [card.step]);
+    return () => observer.disconnect();
+  }, [card.step, card.border]);
 
   return (
     <div
@@ -818,8 +858,6 @@ function StepCard({ card }) {
         position: "relative",
         zIndex: 2,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = ""; }}
     >
       <div className="step-card-num" style={{ color: card.accent }}>{card.step}</div>
       <div className="step-card-icon" style={{ background: card.iconBg }}>{card.emoji}</div>

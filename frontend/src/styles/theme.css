@@ -569,13 +569,13 @@ button.cryo-wallet-btn:hover {
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
+  gap: 19px;
 }
 
 /* StepCard — colored interactive cards */
 .step-card-colored {
-  border-radius: 14px;
-  padding: 24px 20px;
+  border-radius: 20px;
+  padding: 34px 20px;
   border: 1px solid; /* color set via inline border-color from card data */
   cursor: default;
   transition:
@@ -604,7 +604,7 @@ button.cryo-wallet-btn:hover {
 }
 
 .step-card-colored:hover {
-  transform: translateY(-7px) scale(1.03);
+  transform: none;
 }
 
 .step-card-num {
