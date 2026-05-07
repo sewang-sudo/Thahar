@@ -1646,30 +1646,19 @@ button.cryo-wallet-btn:hover {
   /* Golden 4px gap — must match SVG path connector spacing */
   .steps-grid {
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 14oogpx;
 }
 
 /* Cards start small and scale up on scroll */
 .step-card-colored {
   padding: 14px 14px;
-  opacity: 0;
-  transform: scale(1);
-  transform-origin: top center;
-  transition:
-    opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1),
-    transform 0.5s cubic-bezier(0.19, 1, 0.22, 1),
-    box-shadow 0.3s ease;
   will-change: transform, opacity;
-}
-
-.step-card-colored.in-view {
-  opacity: 1;
-  transform: scale(1);
 }
 
 .step-card-colored:hover {
   transform: scale(1.06);
 }
+ 
 
 /* Smaller text & icons inside cards on mobile */
 .step-card-num {

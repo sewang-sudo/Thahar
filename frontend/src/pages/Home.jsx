@@ -757,22 +757,55 @@ export default function Home({ notify, toNPR, toSOL }) {
 function StepCard({ card }) {
   const [npOn, setNpOn] = useState(false);
   const cardRef = useRef(null);
+  const revealedRef = useRef(false);
 
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
+
+    // Set initial hidden state
+    el.style.opacity = "0";
+    el.style.transform = "scale(0.6)";
+    el.style.transition = "opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1), transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)";
+
+    // Step 1: Reveal observer
+    const revealObserver = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          el.classList.add("in-view");
-          observer.unobserve(el);
+        if (entry.isIntersecting && !revealedRef.current) {
+          setTimeout(() => {
+            el.style.opacity = "1";
+            el.style.transform = "scale(1)";
+            revealedRef.current = true;
+          }, (parseInt(card.step) - 1) * 100);
+          revealObserver.unobserve(el);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+
+    revealObserver.observe(el);
+
+    // Step 2: Scroll-driven enlarge after reveal
+    function handleScroll() {
+      if (!revealedRef.current) return;
+      const rect = el.getBoundingClientRect();
+      const viewH = window.innerHeight;
+      // center of card relative to viewport center
+      const cardCenter = rect.top + rect.height / 2;
+      const viewCenter = viewH / 2;
+      const distance = Math.abs(cardCenter - viewCenter);
+      const maxDist = viewH * 0.25;
+      const scale = distance > maxDist ? 1 : Math.max(1, 1.12 - (distance / maxDist) * 0.12);
+      el.style.transform = `scale(${scale.toFixed(3)})`;
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      revealObserver.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [card.step]);
 
   return (
     <div
@@ -784,7 +817,6 @@ function StepCard({ card }) {
         color: card.accent,
         position: "relative",
         zIndex: 2,
-        transitionDelay: `${(parseInt(card.step) - 1) * 0.1}s`,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 14px 36px ${card.border}88`; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = ""; }}
