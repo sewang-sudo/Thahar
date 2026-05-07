@@ -2,7 +2,18 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { registerPolicy, payPremium } from "../utils/thahar";
-import { kathmandu, khotang, chitwan, rice, maize, wheat, millet } from "../assets/images";
+import {
+  kathmandu,
+  khotang,
+  chitwan,
+  rice,
+  maize,
+  wheat,
+  millet,
+  winter,
+  spring,
+  monsoon,
+} from "../assets/images";
 
 const REGIONS = ["kathmandu", "khotang", "chitwan"];
 const CROPS = ["Rice", "Maize", "Wheat", "Millet"];
@@ -491,15 +502,15 @@ export default function Home({ notify, toNPR, toSOL }) {
                   >
                     <div className="options-grid">
                       {REGIONS.map((r) => (
-  <OptionCard
-    key={r}
-    selected={region === r}
-    onClick={() => setRegion(r)}
-    img={REGION_META[r].img}
-    label={r.charAt(0).toUpperCase() + r.slice(1)}
-    sub={REGION_META[r].province}
-  />
-))}
+                        <OptionCard
+                          key={r}
+                          selected={region === r}
+                          onClick={() => setRegion(r)}
+                          img={REGION_META[r].img}
+                          label={r.charAt(0).toUpperCase() + r.slice(1)}
+                          sub={REGION_META[r].province}
+                        />
+                      ))}
                     </div>
                     <WizardNav
                       onNext={() => goTo(2)}
@@ -515,15 +526,18 @@ export default function Home({ notify, toNPR, toSOL }) {
                   >
                     <div className="options-grid">
                       {CROPS.map((c) => (
-  <OptionCard
-    key={c}
-    selected={crop === c}
-    onClick={() => { setCrop(c); setAdjustment(0); }}
-    img={CROP_META[c].img}
-    label={c}
-    sub={CROP_META[c].nepali}
-  />
-))}
+                        <OptionCard
+                          key={c}
+                          selected={crop === c}
+                          onClick={() => {
+                            setCrop(c);
+                            setAdjustment(0);
+                          }}
+                          img={CROP_META[c].img}
+                          label={c}
+                          sub={CROP_META[c].nepali}
+                        />
+                      ))}
                     </div>
                     <WizardNav
                       onBack={() => goTo(1)}
@@ -539,9 +553,9 @@ export default function Home({ notify, toNPR, toSOL }) {
                   >
                     <div className="options-grid">
                       {[
-                        { val: "Monsoon", emoji: "🌧", sub: "Jun – Sep" },
-                        { val: "Winter", emoji: "❄️", sub: "Nov – Feb" },
-                        { val: "Spring", emoji: "🌸", sub: "Mar – May" },
+                        { val: "Monsoon", img: monsoon, sub: "Jun – Sep" },
+                        { val: "Winter", img: winter, sub: "Nov – Feb" },
+                        { val: "Spring", img: spring, sub: "Mar – May" },
                       ].map((s) => (
                         <OptionCard
                           key={s.val}
@@ -550,7 +564,7 @@ export default function Home({ notify, toNPR, toSOL }) {
                             setSeason(s.val);
                             setAdjustment(0);
                           }}
-                          icon={s.emoji}
+                          img={s.img}
                           label={s.val}
                           sub={s.sub}
                         />

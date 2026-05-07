@@ -5,5 +5,8 @@ import rice from "./rice.jpg";
 import maize from "./maize.jpg";
 import wheat from "./wheat.webp";
 import millet from "./millet.jpg";
+import winter from "./winter.jpeg";
+import spring from "./spring.jpg";
+import monsoon from "./monsoon.jpg";
 
-export { kathmandu, khotang, chitwan, rice, maize, wheat, millet };
+export { kathmandu, khotang, chitwan, rice, maize, wheat, millet, winter, spring, monsoon };
