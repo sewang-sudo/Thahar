@@ -1735,3 +1735,85 @@ button.cryo-wallet-btn:hover {
     max-width: none;
   }
 }
+/* ── Wizard Slide Transitions ──────────────────────────────────── */
+@keyframes wizardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes wizardSlideBack {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Wallet Connecting Skeleton ────────────────────────────────── */
+.wallet-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 0;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skel-line {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    var(--grey-100) 25%,
+    var(--border) 50%,
+    var(--grey-100) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.skel-w60 { width: 60%; }
+.skel-w40 { width: 40%; }
+
+.skel-btn-placeholder {
+  width: 160px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--grey-100) 25%,
+    var(--border) 50%,
+    var(--grey-100) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  margin-top: 8px;
+}
+/* ── Option Card Images ────────────────────────────────────────── */
+.option-img-wrap {
+  width: 100%;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.option-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

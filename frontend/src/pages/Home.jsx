@@ -47,6 +47,7 @@ export default function Home({ notify, toNPR, toSOL }) {
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isInPhantom = window.phantom?.solana?.isPhantom;
   const [wizardStep, setWizardStep] = useState(1);
+  const [wizardDir, setWizardDir] = useState(1);
   const [txStep, setTxStep] = useState("register");
   const [loading, setLoading] = useState(false);
   const [region, setRegion] = useState(null);
@@ -122,7 +123,9 @@ export default function Home({ notify, toNPR, toSOL }) {
       50,
     );
   }
+  // REPLACE the existing goTo function with this:
   function goTo(step) {
+    setWizardDir(step > wizardStep ? 1 : -1);
     setWizardStep(step);
     setTimeout(
       () =>
@@ -390,22 +393,32 @@ export default function Home({ notify, toNPR, toSOL }) {
           </div>
           {!wallet.connected ? (
             <div className="cryo-card connect-prompt">
-              <p>
-                Connect your Phantom wallet to register a policy on Solana
-                devnet.
-              </p>
-              {isMobile && !isInPhantom ? (
-                <button
-                  className="cryo-btn"
-                  onClick={() =>
-                    (window.location.href =
-                      "phantom://browse/https%3A%2F%2Fthahar.vercel.app")
-                  }
-                >
-                  🔗 Open in Phantom
-                </button>
+              {wallet.connecting ? (
+                <div className="wallet-skeleton">
+                  <div className="skel-line skel-w60" />
+                  <div className="skel-line skel-w40" />
+                  <div className="skel-btn-placeholder" />
+                </div>
               ) : (
-                <WalletMultiButton className="cryo-wallet-btn" />
+                <>
+                  <p>
+                    Connect your Phantom wallet to register a policy on Solana
+                    devnet.
+                  </p>
+                  {isMobile && !isInPhantom ? (
+                    <button
+                      className="cryo-btn"
+                      onClick={() =>
+                        (window.location.href =
+                          "phantom://browse/https%3A%2F%2Fthahar.vercel.app")
+                      }
+                    >
+                      🔗 Open in Phantom
+                    </button>
+                  ) : (
+                    <WalletMultiButton className="cryo-wallet-btn" />
+                  )}
+                </>
               )}
             </div>
           ) : txStep === "done" ? (
@@ -503,255 +516,265 @@ export default function Home({ notify, toNPR, toSOL }) {
                   })}
                 </div>
               </div>
-              <div className="cryo-card wizard-card">
-                {wizardStep === 1 && (
-                  <WizardStep
-                    question="Where is your farm?"
-                    hint="Select the district closest to your farmland."
-                  >
-                    <div className="options-grid">
-                      {REGIONS.map((r) => (
-                        <OptionCard
-                          key={r}
-                          selected={region === r}
-                          onClick={() => setRegion(r)}
-                          img={REGION_META[r].img}
-                          label={r.charAt(0).toUpperCase() + r.slice(1)}
-                          sub={REGION_META[r].province}
-                        />
-                      ))}
-                    </div>
-                    <WizardNav
-                      onNext={() => goTo(2)}
-                      nextDisabled={!canNext[1]}
-                      showBack={false}
-                    />
-                  </WizardStep>
-                )}
-                {wizardStep === 2 && (
-                  <WizardStep
-                    question="What do you grow?"
-                    hint="Your crop determines the drought threshold."
-                  >
-                    <div className="options-grid">
-                      {CROPS.map((c) => (
-                        <OptionCard
-                          key={c}
-                          selected={crop === c}
-                          onClick={() => {
-                            setCrop(c);
-                            setAdjustment(0);
-                          }}
-                          img={CROP_META[c].img}
-                          label={c}
-                          sub={CROP_META[c].nepali}
-                        />
-                      ))}
-                    </div>
-                    <WizardNav
-                      onBack={() => goTo(1)}
-                      onNext={() => goTo(3)}
-                      nextDisabled={!canNext[2]}
-                    />
-                  </WizardStep>
-                )}
-                {wizardStep === 3 && (
-                  <WizardStep
-                    question="Which season?"
-                    hint="Coverage period aligns with your growing season."
-                  >
-                    <div className="options-grid">
-                      {[
-                        { val: "Monsoon", img: monsoon, sub: "Jun – Sep" },
-                        { val: "Winter", img: winter, sub: "Nov – Feb" },
-                        { val: "Spring", img: spring, sub: "Mar – May" },
-                      ].map((s) => (
-                        <OptionCard
-                          key={s.val}
-                          selected={season === s.val}
-                          onClick={() => {
-                            setSeason(s.val);
-                            setAdjustment(0);
-                          }}
-                          img={s.img}
-                          label={s.val}
-                          sub={s.sub}
-                        />
-                      ))}
-                    </div>
-                    <WizardNav
-                      onBack={() => goTo(2)}
-                      onNext={() => goTo(4)}
-                      nextDisabled={!canNext[3]}
-                    />
-                  </WizardStep>
-                )}
-                {wizardStep === 4 && (
-                  <WizardStep
-                    question="How long do you need coverage?"
-                    hint="Longer coverage protects you through the full season."
-                  >
-                    <div className="options-grid">
-                      {DURATIONS.map((d) => (
-                        <OptionCard
-                          key={d.value}
-                          selected={duration === d.value}
-                          onClick={() => setDuration(d.value)}
-                          label={d.label}
-                          sub={d.sub}
-                        />
-                      ))}
-                    </div>
-                    <WizardNav
-                      onBack={() => goTo(3)}
-                      onNext={() => goTo(5)}
-                      nextDisabled={!canNext[4]}
-                    />
-                  </WizardStep>
-                )}
-                {wizardStep === 5 && (
-                  <WizardStep
-                    question="How much coverage?"
-                    hint="Enter the value of your crop in Nepali Rupees."
-                  >
-                    <div className="coverage-wrap">
-                      <div className="input-group">
-                        <div className="input-prefix">Rs.</div>
-                        <input
-                          className="coverage-input"
-                          type="number"
-                          placeholder="50,000"
-                          min="1000"
-                          value={coverage}
-                          onChange={(e) => setCoverage(e.target.value)}
-                        />
-                        <div
-                          className={`sol-badge${coverage && parseFloat(coverage) >= 1000 ? " visible" : ""}`}
+              <div
+                className="cryo-card wizard-card"
+                style={{ overflow: "hidden" }}
+              >
+                <div
+                  key={wizardStep}
+                  style={{
+                    animation: `wizardSlide${wizardDir > 0 ? "In" : "Back"} 0.32s cubic-bezier(0.4, 0, 0.2, 1) both`,
+                  }}
+                >
+                  {wizardStep === 1 && (
+                    <WizardStep
+                      question="Where is your farm?"
+                      hint="Select the district closest to your farmland."
+                    >
+                      <div className="options-grid">
+                        {REGIONS.map((r) => (
+                          <OptionCard
+                            key={r}
+                            selected={region === r}
+                            onClick={() => setRegion(r)}
+                            img={REGION_META[r].img}
+                            label={r.charAt(0).toUpperCase() + r.slice(1)}
+                            sub={REGION_META[r].province}
+                          />
+                        ))}
+                      </div>
+                      <WizardNav
+                        onNext={() => goTo(2)}
+                        nextDisabled={!canNext[1]}
+                        showBack={false}
+                      />
+                    </WizardStep>
+                  )}
+                  {wizardStep === 2 && (
+                    <WizardStep
+                      question="What do you grow?"
+                      hint="Your crop determines the drought threshold."
+                    >
+                      <div className="options-grid">
+                        {CROPS.map((c) => (
+                          <OptionCard
+                            key={c}
+                            selected={crop === c}
+                            onClick={() => {
+                              setCrop(c);
+                              setAdjustment(0);
+                            }}
+                            img={CROP_META[c].img}
+                            label={c}
+                            sub={CROP_META[c].nepali}
+                          />
+                        ))}
+                      </div>
+                      <WizardNav
+                        onBack={() => goTo(1)}
+                        onNext={() => goTo(3)}
+                        nextDisabled={!canNext[2]}
+                      />
+                    </WizardStep>
+                  )}
+                  {wizardStep === 3 && (
+                    <WizardStep
+                      question="Which season?"
+                      hint="Coverage period aligns with your growing season."
+                    >
+                      <div className="options-grid">
+                        {[
+                          { val: "Monsoon", img: monsoon, sub: "Jun – Sep" },
+                          { val: "Winter", img: winter, sub: "Nov – Feb" },
+                          { val: "Spring", img: spring, sub: "Mar – May" },
+                        ].map((s) => (
+                          <OptionCard
+                            key={s.val}
+                            selected={season === s.val}
+                            onClick={() => {
+                              setSeason(s.val);
+                              setAdjustment(0);
+                            }}
+                            img={s.img}
+                            label={s.val}
+                            sub={s.sub}
+                          />
+                        ))}
+                      </div>
+                      <WizardNav
+                        onBack={() => goTo(2)}
+                        onNext={() => goTo(4)}
+                        nextDisabled={!canNext[3]}
+                      />
+                    </WizardStep>
+                  )}
+                  {wizardStep === 4 && (
+                    <WizardStep
+                      question="How long do you need coverage?"
+                      hint="Longer coverage protects you through the full season."
+                    >
+                      <div className="options-grid">
+                        {DURATIONS.map((d) => (
+                          <OptionCard
+                            key={d.value}
+                            selected={duration === d.value}
+                            onClick={() => setDuration(d.value)}
+                            label={d.label}
+                            sub={d.sub}
+                          />
+                        ))}
+                      </div>
+                      <WizardNav
+                        onBack={() => goTo(3)}
+                        onNext={() => goTo(5)}
+                        nextDisabled={!canNext[4]}
+                      />
+                    </WizardStep>
+                  )}
+                  {wizardStep === 5 && (
+                    <WizardStep
+                      question="How much coverage?"
+                      hint="Enter the value of your crop in Nepali Rupees."
+                    >
+                      <div className="coverage-wrap">
+                        <div className="input-group">
+                          <div className="input-prefix">Rs.</div>
+                          <input
+                            className="coverage-input"
+                            type="number"
+                            placeholder="50,000"
+                            min="1000"
+                            value={coverage}
+                            onChange={(e) => setCoverage(e.target.value)}
+                          />
+                          <div
+                            className={`sol-badge${coverage && parseFloat(coverage) >= 1000 ? " visible" : ""}`}
+                          >
+                            ≈ {solAmount.toFixed(4)} SOL
+                          </div>
+                        </div>
+                        <div className="coverage-note">
+                          Minimum Rs. 1,000 · Converts to SOL at current rate
+                        </div>
+                        {crop && season && (
+                          <div className="threshold-box">
+                            <div className="threshold-box-label">
+                              Rainfall Trigger Threshold
+                            </div>
+                            <div className="threshold-controls">
+                              <button
+                                className="cryo-btn btn-outline adj-btn"
+                                onClick={() =>
+                                  setAdjustment((a) => Math.max(a - 1, -5))
+                                }
+                                type="button"
+                              >
+                                −
+                              </button>
+                              <span className="threshold-val">
+                                {finalThreshold} mm
+                              </span>
+                              <button
+                                className="cryo-btn btn-outline adj-btn"
+                                onClick={() =>
+                                  setAdjustment((a) => Math.min(a + 1, 5))
+                                }
+                                type="button"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <div
+                              className={`threshold-note${Math.abs(adjustment) >= 3 ? " warn" : ""}`}
+                            >
+                              {adjustment === 0
+                                ? `Recommended: ${baseThreshold}mm for ${crop} in ${season}`
+                                : Math.abs(adjustment) === 5
+                                  ? "⚠️ Maximum adjustment reached"
+                                  : Math.abs(adjustment) >= 3
+                                    ? `⚠️ ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended — payout conditions may vary`
+                                    : `Adjusted ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended`}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <WizardNav
+                        onBack={() => goTo(4)}
+                        onNext={() => goTo(6)}
+                        nextDisabled={!canNext[5]}
+                        nextLabel="Review Policy →"
+                      />
+                    </WizardStep>
+                  )}
+                  {wizardStep === 6 && (
+                    <WizardStep
+                      question="Review your policy"
+                      hint="Confirm your details before registering on Solana."
+                    >
+                      <div className={`risk-banner ${risk.level}`}>
+                        <div className="risk-dot" />
+                        <div className="risk-text">
+                          <div className="risk-label">{risk.label}</div>
+                          <div className="risk-desc">{risk.desc}</div>
+                        </div>
+                      </div>
+                      <div className="summary-grid">
+                        {[
+                          {
+                            key: "Region",
+                            val: region
+                              ? region.charAt(0).toUpperCase() + region.slice(1)
+                              : "—",
+                          },
+                          { key: "Crop", val: crop || "—" },
+                          { key: "Season", val: season || "—" },
+                          {
+                            key: "Duration",
+                            val: duration ? `${duration} days` : "—",
+                          },
+                          {
+                            key: "Coverage",
+                            val: coverage
+                              ? `Rs. ${parseFloat(coverage).toLocaleString()} ≈ ${solAmount.toFixed(4)} SOL`
+                              : "—",
+                            green: true,
+                          },
+                          { key: "Policy Type", val: "Drought" },
+                          {
+                            key: "Threshold",
+                            val: `${finalThreshold} mm rainfall`,
+                          },
+                          {
+                            key: "Premium",
+                            val: `${premiumSOL} SOL (5%)`,
+                            green: true,
+                          },
+                        ].map((row) => (
+                          <div className="summary-row" key={row.key}>
+                            <div className="summary-key">{row.key}</div>
+                            <div
+                              className={`summary-val${row.green ? " green" : ""}`}
+                            >
+                              {row.val}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="wizard-nav">
+                        <button className="btn-back" onClick={() => goTo(5)}>
+                          ← Back
+                        </button>
+                        <button
+                          className="btn-register"
+                          onClick={handleRegister}
+                          disabled={loading}
                         >
-                          ≈ {solAmount.toFixed(4)} SOL
-                        </div>
+                          {loading ? "Registering..." : "Register Policy"}
+                        </button>
                       </div>
-                      <div className="coverage-note">
-                        Minimum Rs. 1,000 · Converts to SOL at current rate
-                      </div>
-                      {crop && season && (
-                        <div className="threshold-box">
-                          <div className="threshold-box-label">
-                            Rainfall Trigger Threshold
-                          </div>
-                          <div className="threshold-controls">
-                            <button
-                              className="cryo-btn btn-outline adj-btn"
-                              onClick={() =>
-                                setAdjustment((a) => Math.max(a - 1, -5))
-                              }
-                              type="button"
-                            >
-                              −
-                            </button>
-                            <span className="threshold-val">
-                              {finalThreshold} mm
-                            </span>
-                            <button
-                              className="cryo-btn btn-outline adj-btn"
-                              onClick={() =>
-                                setAdjustment((a) => Math.min(a + 1, 5))
-                              }
-                              type="button"
-                            >
-                              +
-                            </button>
-                          </div>
-                          <div
-                            className={`threshold-note${Math.abs(adjustment) >= 3 ? " warn" : ""}`}
-                          >
-                            {adjustment === 0
-                              ? `Recommended: ${baseThreshold}mm for ${crop} in ${season}`
-                              : Math.abs(adjustment) === 5
-                                ? "⚠️ Maximum adjustment reached"
-                                : Math.abs(adjustment) >= 3
-                                  ? `⚠️ ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended — payout conditions may vary`
-                                  : `Adjusted ${adjustment > 0 ? "+" : ""}${adjustment}mm from recommended`}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <WizardNav
-                      onBack={() => goTo(4)}
-                      onNext={() => goTo(6)}
-                      nextDisabled={!canNext[5]}
-                      nextLabel="Review Policy →"
-                    />
-                  </WizardStep>
-                )}
-                {wizardStep === 6 && (
-                  <WizardStep
-                    question="Review your policy"
-                    hint="Confirm your details before registering on Solana."
-                  >
-                    <div className={`risk-banner ${risk.level}`}>
-                      <div className="risk-dot" />
-                      <div className="risk-text">
-                        <div className="risk-label">{risk.label}</div>
-                        <div className="risk-desc">{risk.desc}</div>
-                      </div>
-                    </div>
-                    <div className="summary-grid">
-                      {[
-                        {
-                          key: "Region",
-                          val: region
-                            ? region.charAt(0).toUpperCase() + region.slice(1)
-                            : "—",
-                        },
-                        { key: "Crop", val: crop || "—" },
-                        { key: "Season", val: season || "—" },
-                        {
-                          key: "Duration",
-                          val: duration ? `${duration} days` : "—",
-                        },
-                        {
-                          key: "Coverage",
-                          val: coverage
-                            ? `Rs. ${parseFloat(coverage).toLocaleString()} ≈ ${solAmount.toFixed(4)} SOL`
-                            : "—",
-                          green: true,
-                        },
-                        { key: "Policy Type", val: "Drought" },
-                        {
-                          key: "Threshold",
-                          val: `${finalThreshold} mm rainfall`,
-                        },
-                        {
-                          key: "Premium",
-                          val: `${premiumSOL} SOL (5%)`,
-                          green: true,
-                        },
-                      ].map((row) => (
-                        <div className="summary-row" key={row.key}>
-                          <div className="summary-key">{row.key}</div>
-                          <div
-                            className={`summary-val${row.green ? " green" : ""}`}
-                          >
-                            {row.val}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="wizard-nav">
-                      <button className="btn-back" onClick={() => goTo(5)}>
-                        ← Back
-                      </button>
-                      <button
-                        className="btn-register"
-                        onClick={handleRegister}
-                        disabled={loading}
-                      >
-                        {loading ? "Registering..." : "Register Policy"}
-                      </button>
-                    </div>
-                  </WizardStep>
-                )}
+                    </WizardStep>
+                  )}
+                </div>
               </div>
             </>
           )}
