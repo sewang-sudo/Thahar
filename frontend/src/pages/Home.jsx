@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { registerPolicy, payPremium } from "../utils/thahar";
+import { kathmandu, khotang, chitwan, rice, maize, wheat, millet } from "../assets/images";
 
 const REGIONS = ["kathmandu", "khotang", "chitwan"];
 const CROPS = ["Rice", "Maize", "Wheat", "Millet"];
@@ -12,15 +13,15 @@ const DURATIONS = [
   { value: 365, label: "365 days", sub: "Full year" },
 ];
 const CROP_META = {
-  Rice: { emoji: "🌾", nepali: "Dhan" },
-  Maize: { emoji: "🌽", nepali: "Makai" },
-  Wheat: { emoji: "🌿", nepali: "Gahu" },
-  Millet: { emoji: "🪨", nepali: "Kodo" },
+  Rice: { img: rice, nepali: "Dhan" },
+  Maize: { img: maize, nepali: "Makai" },
+  Wheat: { img: wheat, nepali: "Gahu" },
+  Millet: { img: millet, nepali: "Kodo" },
 };
 const REGION_META = {
-  kathmandu: { emoji: "🏔", province: "Bagmati Province" },
-  khotang: { emoji: "🌄", province: "Koshi Province" },
-  chitwan: { emoji: "🌿", province: "Bagmati Province" },
+  kathmandu: { img: kathmandu, province: "Bagmati Province" },
+  khotang: { img: khotang, province: "Koshi Province" },
+  chitwan: { img: chitwan, province: "Bagmati Province" },
 };
 const THRESHOLDS = {
   Rice: { Monsoon: 40, Spring: 30, Winter: 20 },
@@ -490,15 +491,15 @@ export default function Home({ notify, toNPR, toSOL }) {
                   >
                     <div className="options-grid">
                       {REGIONS.map((r) => (
-                        <OptionCard
-                          key={r}
-                          selected={region === r}
-                          onClick={() => setRegion(r)}
-                          icon={REGION_META[r].emoji}
-                          label={r.charAt(0).toUpperCase() + r.slice(1)}
-                          sub={REGION_META[r].province}
-                        />
-                      ))}
+  <OptionCard
+    key={r}
+    selected={region === r}
+    onClick={() => setRegion(r)}
+    img={REGION_META[r].img}
+    label={r.charAt(0).toUpperCase() + r.slice(1)}
+    sub={REGION_META[r].province}
+  />
+))}
                     </div>
                     <WizardNav
                       onNext={() => goTo(2)}
@@ -514,18 +515,15 @@ export default function Home({ notify, toNPR, toSOL }) {
                   >
                     <div className="options-grid">
                       {CROPS.map((c) => (
-                        <OptionCard
-                          key={c}
-                          selected={crop === c}
-                          onClick={() => {
-                            setCrop(c);
-                            setAdjustment(0);
-                          }}
-                          icon={CROP_META[c].emoji}
-                          label={c}
-                          sub={CROP_META[c].nepali}
-                        />
-                      ))}
+  <OptionCard
+    key={c}
+    selected={crop === c}
+    onClick={() => { setCrop(c); setAdjustment(0); }}
+    img={CROP_META[c].img}
+    label={c}
+    sub={CROP_META[c].nepali}
+  />
+))}
                     </div>
                     <WizardNav
                       onBack={() => goTo(1)}
@@ -768,33 +766,36 @@ function StepCard({ card }) {
     // Initial hidden state
     el.style.opacity = "0";
     el.style.transform = "scale(0.6)";
-    el.style.transition = "opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1)";
+    el.style.transition =
+      "opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1)";
 
     // Single observer that handles both reveal and unreveal
     const observer = new IntersectionObserver(
-  ([entry]) => {
-    const fromBottom = entry.boundingClientRect.top > window.innerHeight / 2;
+      ([entry]) => {
+        const fromBottom =
+          entry.boundingClientRect.top > window.innerHeight / 2;
 
-    if (entry.isIntersecting) {
-      // Scrolling down → reveal left to right (card 1 first)
-      // Scrolling up → reveal right to left (card 5 first)
-      const delay = fromBottom
-        ? stepIndex * 150
-        : (4 - stepIndex) * 150;
-      setTimeout(() => {
-        el.style.opacity = "1";
-        el.style.transform = "scale(1)";
-      }, delay);
-    } else {
-      // Unreveal always right to left (card 5 first)
-      setTimeout(() => {
-        el.style.opacity = "0";
-        el.style.transform = "scale(0.6)";
-      }, (4 - stepIndex) * 150);
-    }
-  },
-  { threshold: 0.15, rootMargin: "-15% 0px -25% 0px" }
-);
+        if (entry.isIntersecting) {
+          // Scrolling down → reveal left to right (card 1 first)
+          // Scrolling up → reveal right to left (card 5 first)
+          const delay = fromBottom ? stepIndex * 150 : (4 - stepIndex) * 150;
+          setTimeout(() => {
+            el.style.opacity = "1";
+            el.style.transform = "scale(1)";
+          }, delay);
+        } else {
+          // Unreveal always right to left (card 5 first)
+          setTimeout(
+            () => {
+              el.style.opacity = "0";
+              el.style.transform = "scale(0.6)";
+            },
+            (4 - stepIndex) * 150,
+          );
+        }
+      },
+      { threshold: 0.15, rootMargin: "-15% 0px -25% 0px" },
+    );
 
     observer.observe(el);
 
@@ -833,7 +834,10 @@ function StepCard({ card }) {
         const maxDist = viewH * 0.25;
         // Only enlarge if already visible
         if (el.style.opacity === "1") {
-          const scale = distance > maxDist ? 1 : Math.max(1, 1.12 - (distance / maxDist) * 0.12);
+          const scale =
+            distance > maxDist
+              ? 1
+              : Math.max(1, 1.12 - (distance / maxDist) * 0.12);
           el.style.transform = `scale(${scale.toFixed(3)})`;
         }
       }
@@ -859,13 +863,27 @@ function StepCard({ card }) {
         zIndex: 2,
       }}
     >
-      <div className="step-card-num" style={{ color: card.accent }}>{card.step}</div>
-      <div className="step-card-icon" style={{ background: card.iconBg }}>{card.emoji}</div>
+      <div className="step-card-num" style={{ color: card.accent }}>
+        {card.step}
+      </div>
+      <div className="step-card-icon" style={{ background: card.iconBg }}>
+        {card.emoji}
+      </div>
       <h3 className="step-card-title">{card.title}</h3>
       <p className="step-card-desc">{card.desc}</p>
-      {npOn && <p className="step-card-np visible" style={{ borderTopColor: card.border }}>{card.np}</p>}
+      {npOn && (
+        <p
+          className="step-card-np visible"
+          style={{ borderTopColor: card.border }}
+        >
+          {card.np}
+        </p>
+      )}
       <div className="step-card-footer">
-        <button className="step-card-translate" onClick={() => setNpOn((o) => !o)}>
+        <button
+          className="step-card-translate"
+          onClick={() => setNpOn((o) => !o)}
+        >
           {npOn ? "🇬🇧 EN" : "🇳🇵 NP"}
         </button>
       </div>
@@ -883,13 +901,18 @@ function WizardStep({ question, hint, children }) {
   );
 }
 
-function OptionCard({ selected, onClick, icon, label, sub }) {
+function OptionCard({ selected, onClick, icon, img, label, sub }) {
   return (
     <div
       className={`option-card${selected ? " selected" : ""}`}
       onClick={onClick}
     >
-      {icon && <div className="option-icon">{icon}</div>}
+      {img && (
+        <div className="option-img-wrap">
+          <img src={img} alt={label} className="option-img" />
+        </div>
+      )}
+      {icon && !img && <div className="option-icon">{icon}</div>}
       <div className="option-label">{label}</div>
       {sub && <div className="option-sub">{sub}</div>}
     </div>
