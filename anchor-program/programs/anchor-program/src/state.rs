@@ -2,9 +2,7 @@ use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
 pub enum PolicyType {
-    Crop,
-    Flood,
-    Both,
+    Crop
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]

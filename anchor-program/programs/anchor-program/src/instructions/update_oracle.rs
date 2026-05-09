@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use crate::state::OracleData;
 use crate::error::ThaharError;
 
-const CRANK_AUTHORITY: Pubkey=pubkey!("HinDq9kni8F3ZBuUK2NdFDjnL98AZzv4jZtDtSsNr1rL");
+ pub const CRANK_AUTHORITY: Pubkey=pubkey!("HinDq9kni8F3ZBuUK2NdFDjnL98AZzv4jZtDtSsNr1rL");
 
 #[derive(Accounts)]
 #[instruction(region_id: String, rainfall_mm: i64, flood_level_cm: i64)]

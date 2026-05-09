@@ -10,7 +10,11 @@ pub struct CloseOracle<'info> {
     )]
     /// CHECK: closing this account, no need to deserialize
     pub oracle: UncheckedAccount<'info>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = caller.key() == crate::instructions::update_oracle::CRANK_AUTHORITY
+        @ crate::error::ThaharError::UnauthorizedOracle
+    )]
     pub caller: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
