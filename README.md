@@ -39,7 +39,7 @@ Not because of rules. Because of code.
 | Domain | thahar.com.np (registration pending — applied) |
 | Program ID | `3o7dXUGpic6U7AsCpEwv4ifVp4w2B4waHk3ScbjT1NU2` |
 | Network | Solana Devnet |
-| Blink | https://dial.to/?action=solana-action:https://zonal-victory-production-61b3.up.railway.app/api/blink |
+| Blink | https://dial.to/?action=solana-action:thahar-blinks.onrender.com/api/blink |
 | Blink Endpoint | https://zonal-victory-production-61b3.up.railway.app/api/blink |
 
 ---
@@ -96,7 +96,7 @@ No AI black box — pure logic based on real data. Transparent and auditable.
 | Smart Contract | Rust + Anchor Framework |
 | Oracle Data | Open-Meteo API (real rainfall) |
 | Oracle Pusher | Node.js crank — runs every 12 hours |
-| Blink Server | Express.js on Railway |
+| Blink Server | Express.js on Render |
 | Frontend | React + Wallet Adapter on Vercel |
 | Risk Advisor | Rule-based JS logic on live oracle data |
 
