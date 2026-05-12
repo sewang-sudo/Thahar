@@ -12,7 +12,7 @@ Over 2 million farming households in Nepal have no crop insurance.
 When drought hits — there is no safety net. Relief takes weeks through
 systems that were never built for people like my family.
 
-Between 2021 and 2024, Nepal's cooperative crisis unfolded across 266 cooperatives.. Tens of thousands of depositors —
+Between 2021 and 2024, Nepal's cooperative crisis unfolded across 266 cooperatives. Tens of thousands of depositors —
 farmers, daily wage earners, retirees — lost their savings when cooperative funds
 were illegally diverted into private businesses. My family were among the victims.
 
@@ -39,8 +39,8 @@ Not because of rules. Because of code.
 | Domain | thahar.com.np (registration pending — applied) |
 | Program ID | `3o7dXUGpic6U7AsCpEwv4ifVp4w2B4waHk3ScbjT1NU2` |
 | Network | Solana Devnet |
-| Blink | https://dial.to/?action=solana-action:thahar-blinks.onrender.com/api/blink |
-| Blink Endpoint | https://zonal-victory-production-61b3.up.railway.app/api/blink |
+| Blink | https://dial.to/?action=solana-action:https://thahar-blinks.onrender.com/api/blink |
+| Blink Endpoint | https://thahar-blinks.onrender.com/api/blink |
 
 ---
 
@@ -67,7 +67,7 @@ No middleman can touch the funds. Not even me.
 Register a crop insurance policy directly from any Blink-compatible platform:
 
 ```
-https://dial.to/?action=solana-action:https://zonal-victory-production-61b3.up.railway.app/api/blink
+https://dial.to/?action=solana-action:https://thahar-blinks.onrender.com/api/blink
 ```
 
 Select your district, select coverage amount, sign — done.
